@@ -20,6 +20,9 @@
         .nav-item i { font-size: 1.3rem; display: block; margin-bottom: 3px; }
         .budget-sum { background: var(--accent); color: white; border-radius: 15px; padding: 25px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .btn-nav { background: #333; color: white; border-radius: 50px; font-size: 0.75rem; padding: 6px 15px; text-decoration: none; display: inline-flex; align-items: center; }
+        .pack-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
+        .pack-text { flex-grow: 1; margin-left: 10px; cursor: pointer; font-size: 0.95rem; }
+        .pack-text.checked { text-decoration: line-through; color: #aaa; }
     </style>
 </head>
 <body>
@@ -102,10 +105,40 @@
     <div id="exp-list"></div>
     <button class="btn btn-link btn-sm w-100 text-muted mt-4" onclick="clearAll()">清空所有記帳紀錄</button>
 </div>
+<div id="packing" class="content-section">
+    <div class="day-label">🧳 行李清單</div>
+    
+    <div class="card-custom mb-3">
+        <div class="input-group input-group-sm">
+            <input type="text" id="new-cat-input" class="form-control" placeholder="新增類別 (如：化妝品)">
+            <button class="btn btn-dark" onclick="addNewCategory()">建立分類</button>
+        </div>
+    </div>
 
+    <div id="pack-list-container"></div>
+    
+    <button class="btn btn-link btn-sm w-100 text-muted mt-2" onclick="clearCheckedItems()">清除所有已勾選項目</button>
+</div>
+</div>
+
+<div id="info" class="content-section">
+    <div class="day-label">🔗 快速連結與電話</div>
+    <div class="card-custom">
+        <h6 class="fw-bold">緊急連絡</h6>
+        <p class="small mb-2">外交部急難救助：+886-800-085-095</p>
+        <hr>
+        <h6 class="fw-bold">常用連結</h6>
+        <div class="d-grid gap-2">
+            <a href="https://www.sbb.ch/en" target="_blank" class="btn btn-sm btn-outline-dark text-start">SBB 瑞士國鐵官網</a>
+            <a href="https://www.meteoswiss.admin.ch/" target="_blank" class="btn btn-sm btn-outline-dark text-start">MeteoSwiss 瑞士天氣</a>
+        </div>
+    </div>
+</div>
 <nav class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('itinerary', this)"><i class="fas fa-calendar-alt"></i>行程</div>
+    <div class="nav-item" onclick="switchTab('info', this)"><i class="fas fa-info-circle"></i>資訊</div>
     <div class="nav-item" onclick="switchTab('budget', this)"><i class="fas fa-wallet"></i>記帳</div>
+    <div class="nav-item" onclick="switchTab('packing', this)"><i class="fas fa-check-square"></i>行李</div>
     </nav>
 
 <script>
@@ -117,24 +150,36 @@
         window.scrollTo(0,0);
     }
 
-    async function fetchRates() {
+async function fetchRates() {
         try {
             const res = await fetch('https://open.er-api.com/v6/latest/TWD');
             const data = await res.json();
             if (data && data.rates) {
-                const chfRate = (1 / data.rates.CHF).toFixed(2);
-                const eurRate = (1 / data.rates.EUR).toFixed(2);
-                const hkdRate = (1 / data.rates.HKD).toFixed(2);
-                document.getElementById('rate-chf').value = chfRate;
-                document.getElementById('rate-eur').value = eurRate;
-                document.getElementById('rate-hkd').value = hkdRate;
-                alert('匯率已更新！');
-                render();
-            }
-        } catch (e) { alert('無法獲取匯率'); }
-    }
+                // 更新輸入框數值
+                const chfInput = document.getElementById('rate-chf');
+                const eurInput = document.getElementById('rate-eur');
+                const hkdInput = document.getElementById('rate-hkd');
 
-    let expenses = JSON.parse(localStorage.getItem('trip_v2026')) || [];
+                if (chfInput) chfInput.value = (1 / data.rates.CHF).toFixed(2);
+                if (eurInput) eurInput.value = (1 / data.rates.EUR).toFixed(2);
+                if (hkdInput) hkdInput.value = (1 / data.rates.HKD).toFixed(2);
+                
+                // 成功更新後只跳這一個通知
+                alert('匯率已更新！');
+
+                // 嘗試渲染畫面，如果不成功（例如不在記帳頁面）就安靜地跳過，不要報錯
+                try {
+                    render();
+                } catch (renderError) {
+                    console.log("畫面渲染跳過，但不影響匯率更新");
+                }
+            }
+        } catch (e) {
+            // 只有在真的連不到網路或 API 壞掉時才跳這個
+            console.error("API Error:", e);
+            alert('網路連線不穩，無法獲取即時匯率');
+        }
+    }    let expenses = JSON.parse(localStorage.getItem('trip_v2026')) || [];
 
     function addExp() {
         const name = document.getElementById('exp-name').value, amt = document.getElementById('exp-amt').value, curr = document.getElementById('exp-curr').value, note = document.getElementById('exp-note').value;
@@ -145,27 +190,102 @@
         }
     }
 
-    function render() {
-        const list = document.getElementById('exp-list'), rCHF = parseFloat(document.getElementById('rate-chf').value) || 0, rEUR = parseFloat(document.getElementById('rate-eur').value) || 0, rHKD = parseFloat(document.getElementById('rate-hkd').value) || 0;
-        list.innerHTML = ''; let sCHF = 0, sEUR = 0, sHKD = 0, sTWD = 0;
-        expenses.forEach((ex, i) => {
-            let t = 0;
-            if(ex.curr === 'CHF') { t = ex.amt * rCHF; sCHF += ex.amt; }
-            else if(ex.curr === 'EUR') { t = ex.amt * rEUR; sEUR += ex.amt; }
-            else if(ex.curr === 'HKD') { t = ex.amt * rHKD; sHKD += ex.amt; }
-            else { t = ex.amt; }
-            sTWD += t;
-            list.innerHTML += `<div class="card-custom"><div class="d-flex justify-content-between"><div><div class="fw-bold">${ex.name}</div><div class="small text-muted">${ex.curr} ${ex.amt} ➔ NT$ ${Math.round(t)}</div></div><button class="btn btn-sm text-danger" onclick="del(${i})"><i class="fas fa-trash"></i></button></div>${ex.note ? `<div class="small mt-2 p-2 bg-light rounded">${ex.note}</div>` : ''}</div>`;
-        });
-        document.getElementById('total-twd').innerText = Math.round(sTWD).toLocaleString();
-        document.getElementById('total-chf').innerText = sCHF.toLocaleString();
-        document.getElementById('total-eur').innerText = sEUR.toLocaleString();
-        document.getElementById('total-hkd').innerText = sHKD.toLocaleString();
-        localStorage.setItem('trip_v2026', JSON.stringify(expenses));
+try { render(); } catch(e) { console.log(e); }
+
+// --- 獨立新增分類行李邏輯 ---
+    let categorizedPack = JSON.parse(localStorage.getItem('trip_pack_cat')) || [];
+
+    // A. 新增大類別
+    function addNewCategory() {
+        const catInput = document.getElementById('new-cat-input');
+        const catName = catInput.value.trim();
+        if (!catName) return;
+
+        // 檢查是否重複
+        if (categorizedPack.find(c => c.category === catName)) {
+            alert("此類別已存在");
+            return;
+        }
+
+        categorizedPack.push({ category: catName, items: [] });
+        catInput.value = "";
+        renderPackList();
     }
-    function del(i) { if(confirm('刪除？')) { expenses.splice(i, 1); render(); } }
-    function clearAll() { if(confirm('確定清空？')) { expenses = []; render(); } }
-    render();
+
+    // B. 在特定類別下新增項目 (透過彈出視窗詢問，操作最直覺)
+    function addItemToCat(catIdx) {
+        const itemName = prompt(`在「${categorizedPack[catIdx].category}」新增項目：`);
+        if (itemName && itemName.trim() !== "") {
+            categorizedPack[catIdx].items.push({ text: itemName.trim(), checked: false });
+            renderPackList();
+        }
+    }
+
+    function toggleItem(catIdx, itemIdx) {
+        categorizedPack[catIdx].items[itemIdx].checked = !categorizedPack[catIdx].items[itemIdx].checked;
+        renderPackList();
+    }
+
+    function deleteCategory(catIdx) {
+        if(confirm(`確定要刪除「${categorizedPack[catIdx].category}」整個分類嗎？`)) {
+            categorizedPack.splice(catIdx, 1);
+            renderPackList();
+        }
+    }
+
+    function deleteSingleItem(catIdx, itemIdx) {
+        categorizedPack[catIdx].items.splice(itemIdx, 1);
+        renderPackList();
+    }
+
+    function renderPackList() {
+        const container = document.getElementById('pack-list-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        categorizedPack.forEach((catObj, catIdx) => {
+            let catHtml = `
+                <div class="card-custom mb-3">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <span class="fw-bold text-primary"># ${catObj.category}</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-dark py-0" onclick="addItemToCat(${catIdx})">+ 項目</button>
+                            <button class="btn btn-sm text-danger ms-2" onclick="deleteCategory(${catIdx})"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>`;
+            
+            if (catObj.items.length === 0) {
+                catHtml += `<div class="text-center py-2 small text-muted">暫無項目，點擊 + 新增</div>`;
+            }
+
+            catObj.items.forEach((item, itemIdx) => {
+                catHtml += `
+                    <div class="pack-item d-flex align-items-center justify-content-between py-1">
+                        <div class="d-flex align-items-center flex-grow-1" onclick="toggleItem(${catIdx}, ${itemIdx})">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''}>
+                            <span class="pack-text ${item.checked ? 'checked' : ''} ms-2">${item.text}</span>
+                        </div>
+                        <button class="btn btn-sm text-muted" onclick="deleteSingleItem(${catIdx}, ${itemIdx})">×</button>
+                    </div>`;
+            });
+            
+            catHtml += `</div>`;
+            container.innerHTML += catHtml;
+        });
+        localStorage.setItem('trip_pack_cat', JSON.stringify(categorizedPack));
+    }
+
+    function clearCheckedItems() {
+        if(confirm("確定要清除所有已勾選的項目嗎？")) {
+            categorizedPack.forEach(cat => {
+                cat.items = cat.items.filter(item => !item.checked);
+            });
+            renderPackList();
+        }
+    }
+
+    // 初始化執行
+    renderPackList();
 </script>
 </body>
 </html>
