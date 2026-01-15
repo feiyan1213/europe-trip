@@ -23,6 +23,27 @@
         .pack-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
         .pack-text { flex-grow: 1; margin-left: 10px; cursor: pointer; font-size: 0.95rem; }
         .pack-text.checked { text-decoration: line-through; color: #aaa; }
+/* 日期導覽列 */
+        .day-nav-container {
+            display: flex; overflow-x: auto; background: white; padding: 12px 10px; gap: 10px;
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee;
+        }
+        .day-nav-container::-webkit-scrollbar { display: none; }
+        .day-tab {
+            flex: 0 0 auto; padding: 8px 15px; border-radius: 10px; background: #f0f0f0;
+            color: #666; font-size: 0.8rem; cursor: pointer; transition: 0.3s; border: none;
+        }
+        .day-tab.active {
+            background: var(--accent); color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+        /* 行程內容顯示控制 */
+        .day-content { display: none; animation: fadeIn 0.4s ease; }
+        .day-content.active { display: block; }
+        .time-node { border-left: 2px solid #ddd; margin-left: 10px; padding-left: 20px; position: relative; }
+        .time-node::before { 
+            content: ''; position: absolute; left: -6px; top: 5px; 
+            width: 10px; height: 10px; background: var(--accent); border-radius: 50%; 
+        }
     </style>
 </head>
 <body>
@@ -33,43 +54,59 @@
 </div>
 
 <div id="itinerary" class="content-section active">
-    
-    <div class="day-label">9/12 - 9/19 MSC 挪威郵輪</div>
-    <div class="card-custom">
-        <h6 class="fw-bold">🚢 MSC Euribia 啟航</h6>
-        <p class="small text-muted mb-2">路線：基爾(Kiel) ➔ 哥本哈根 ➔ 蓋朗厄爾 ➔ 奧勒松 ➔ 弗洛姆</p>
-        <div class="small p-2 bg-light rounded mb-2"><strong>必做：</strong>在蓋朗厄爾甲板看瀑布、船上享用法式晚餐。</div>
-        <a href="https://www.google.com/maps" class="btn-nav"><i class="fas fa-ship me-2"></i>前往碼頭導航</a>
+    <div class="day-nav-container">
+        <div class="day-tab active" onclick="switchDay('all', this)">總覽</div>
+        <div class="day-tab" onclick="switchDay('910', this)">9/10 出發</div>
+        <div class="day-tab" onclick="switchDay('911', this)">9/11 德國</div>
+        <div class="day-tab" onclick="switchDay('912', this)">9/12 郵輪</div>
+        <div class="day-tab" onclick="switchDay('919', this)">9/19 瑞士</div>
+        <div class="day-tab" onclick="switchDay('920', this)">9/20 鐵力士</div>
+        <div class="day-tab" onclick="switchDay('921', this)">9/21 健行</div>
+        <div class="day-tab" onclick="switchDay('923', this)">9/23 策馬特</div>
+        <div class="day-tab" onclick="switchDay('927', this)">9/27 賦歸</div>
     </div>
 
-    <div class="day-label">9/19 (六) 移動至瑞士</div>
-    <div class="card-custom">
-        <h6 class="fw-bold">✈ 漢堡 ➔ 蘇黎世 ➔ 琉森</h6>
-        <p class="small">航班 LX1057 (09:20-11:35)。下午入住琉森 Hotel，傍晚逛老城區與卡貝爾橋。</p>
+    <div id="day-all" class="day-content active">
+        <div class="card-custom">
+            <h5 class="fw-bold">2026 德瑞挪壯遊 🇪🇺</h5>
+            <p class="small text-muted">高雄出發，橫跨德國、挪威郵輪與瑞士深度遊。</p>
+            <div class="badge bg-dark">Total 19 Days</div>
+        </div>
     </div>
 
-    <div class="day-label">9/20 - 9/22 少女峰地區</div>
-    <div class="card-custom">
-        <h6 class="fw-bold">🏔 瑞吉山 & 溫根/米倫</h6>
-        <p class="small mb-1">9/20: 瑞吉山看 360 度山景，宿 Wengen。</p>
-        <p class="small mb-1">9/21: Männlichen ➔ Kleine Scheidegg 全景健行。</p>
-        <p class="small">9/22: 雪朗峰 007 展望台，回程逛無菸小鎮米倫。</p>
+    <div id="day-910" class="day-content">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">✈️ 啟程 (KHH - FRA)</h6>
+            <div class="time-node">
+                <b>19:10 高雄 (KHH)</b><br><small>搭乘前往香港 (1h 40m)</small>
+            </div>
+            <div class="time-node mt-3">
+                <b>23:55 香港 (HKG)</b><br><small>長途飛行往法蘭克福 (13h 20m)</small>
+            </div>
+        </div>
     </div>
 
-    <div class="day-label">9/23 - 9/25 策馬特馬特洪峰</div>
-    <div class="card-custom">
-        <h6 class="fw-bold">🗻 策馬特深度健行</h6>
-        <p class="small mb-1">9/23: 厄希嫩湖藍色湖水。傍晚抵達策馬特。</p>
-        <p class="small mb-1">9/24: Gornergrat 火車，Rotenboden 下車看馬特洪峰倒影。</p>
-        <p class="small">9/25: Sunnegga 五湖健行，挑戰 Stellisee 經典角度。</p>
+    <div id="day-911" class="day-content">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🇩🇪 抵達與鐵道移動</h6>
+            <div class="time-node">
+                <b>07:15 抵達法蘭克福 (T2)</b>
+            </div>
+            <div class="time-node mt-3">
+                <b>09:41 ICE 高鐵</b><br><small>法蘭克福 ➔ 15:21 抵達基爾</small>
+            </div>
+        </div>
     </div>
 
-    <div class="day-label">9/26 - 9/27 米蘭與賦歸</div>
-    <div class="card-custom">
-        <h6 class="fw-bold">🇮🇹 米蘭大教堂 ➔ 返國</h6>
-        <p class="small">9/26: 經 Visp 轉車前往米蘭。9/27: 下午前往 MXP 機場搭機。</p>
+    <div id="day-921" class="day-content">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🏔️ 少女峰區：全景健行</h6>
+            <p class="small">溫根 ➔ Männlichen ➔ 小夏戴克 (約2小時)</p>
+            <hr>
+            <p class="small mb-0">下午：格林德瓦 / First 山區活動</p>
+        </div>
     </div>
-
+</div>
 </div>
 
 <div id="budget" class="content-section">
@@ -148,6 +185,19 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
         window.scrollTo(0,0);
+    }
+function switchDay(dayId, el) {
+        // 1. 切換標籤顏色
+        const container = el.parentElement;
+        container.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+
+        // 2. 切換顯示內容
+        document.querySelectorAll('.day-content').forEach(c => c.classList.remove('active'));
+        const target = document.getElementById('day-' + dayId);
+        if (target) target.classList.add('active');
+        
+        window.scrollTo(0, 0); // 捲動回頂部
     }
 
 async function fetchRates() {
