@@ -23,18 +23,71 @@
         .pack-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
         .pack-text { flex-grow: 1; margin-left: 10px; cursor: pointer; font-size: 0.95rem; }
         .pack-text.checked { text-decoration: line-through; color: #aaa; }
-/* 日期導覽列 */
+/* 橫向導覽容器 */
         .day-nav-container {
-            display: flex; overflow-x: auto; background: white; padding: 12px 10px; gap: 10px;
-            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee;
+            display: flex;
+            overflow-x: auto;
+            background: white;
+            padding: 15px 10px;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #f0f0f0;
+            -webkit-overflow-scrolling: touch;
         }
         .day-nav-container::-webkit-scrollbar { display: none; }
+
+        /* 日期卡片基礎樣式 */
         .day-tab {
-            flex: 0 0 auto; padding: 8px 15px; border-radius: 10px; background: #f0f0f0;
-            color: #666; font-size: 0.8rem; cursor: pointer; transition: 0.3s; border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 auto;
+            min-width: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        .day-tab.active {
-            background: var(--accent); color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+
+        /* 上排：星期英文 */
+        .day-tab .day-week {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: #ccc; /* 未選中為淺灰色 */
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* 下排：日期數字 */
+        .day-tab .day-num {
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: #ddd; /* 未選中為淺灰色 */
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        /* 選中狀態：深色強調 */
+        .day-tab.active .day-week {
+            color: #333;
+            font-weight: bold;
+        }
+        .day-tab.active .day-num {
+            color: #000;
+            font-weight: 700;
+        }
+
+        /* 選中狀態下方的紅點 */
+        .day-tab.active .day-num::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background-color: #8B0000; /* 深紅色小點 */
+            border-radius: 50%;
         }
         /* 行程內容顯示控制 */
         .day-content { display: none; animation: fadeIn 0.4s ease; }
@@ -50,22 +103,33 @@
 
 <div class="p-4 text-center bg-white border-bottom">
     <h1 style="font-size: 1.2rem; letter-spacing: 4px; margin:0; font-weight: 300;">September 2026 EUROPE</h1>
-    <small class="text-muted">Germany • Norway • Switzerland</small>
+    <small class="text-muted">Germany • Norway Cruise • Switzerland</small>
 </div>
 
-<div id="itinerary" class="content-section active">
-    <div class="day-nav-container">
-        <div class="day-tab active" onclick="switchDay('all', this)">總覽</div>
-        <div class="day-tab" onclick="switchDay('910', this)">9/10 出發</div>
-        <div class="day-tab" onclick="switchDay('911', this)">9/11 德國</div>
-        <div class="day-tab" onclick="switchDay('912', this)">9/12 郵輪</div>
-        <div class="day-tab" onclick="switchDay('919', this)">9/19 瑞士</div>
-        <div class="day-tab" onclick="switchDay('920', this)">9/20 鐵力士</div>
-        <div class="day-tab" onclick="switchDay('921', this)">9/21 健行</div>
-        <div class="day-tab" onclick="switchDay('923', this)">9/23 策馬特</div>
-        <div class="day-tab" onclick="switchDay('927', this)">9/27 賦歸</div>
+<div class="day-nav-container">
+    <div class="day-tab active" onclick="switchDay('all', this)">
+        <span class="day-week">ALL</span><span class="day-num">總覽</span>
     </div>
-
+    <div class="day-tab" onclick="switchDay('910', this)"><span class="day-week">THU</span><span class="day-num">10</span></div>
+    <div class="day-tab" onclick="switchDay('911', this)"><span class="day-week">FRI</span><span class="day-num">11</span></div>
+    <div class="day-tab" onclick="switchDay('912', this)"><span class="day-week">SAT</span><span class="day-num">12</span></div>
+    <div class="day-tab" onclick="switchDay('913', this)"><span class="day-week">SUN</span><span class="day-num">13</span></div>
+    <div class="day-tab" onclick="switchDay('914', this)"><span class="day-week">MON</span><span class="day-num">14</span></div>
+    <div class="day-tab" onclick="switchDay('915', this)"><span class="day-week">TUE</span><span class="day-num">15</span></div>
+    <div class="day-tab" onclick="switchDay('916', this)"><span class="day-week">WED</span><span class="day-num">16</span></div>
+    <div class="day-tab" onclick="switchDay('917', this)"><span class="day-week">THU</span><span class="day-num">17</span></div>
+    <div class="day-tab" onclick="switchDay('918', this)"><span class="day-week">FRI</span><span class="day-num">18</span></div>
+    <div class="day-tab" onclick="switchDay('919', this)"><span class="day-week">SAT</span><span class="day-num">19</span></div>
+    <div class="day-tab" onclick="switchDay('920', this)"><span class="day-week">SUN</span><span class="day-num">20</span></div>
+    <div class="day-tab" onclick="switchDay('921', this)"><span class="day-week">MON</span><span class="day-num">21</span></div>
+    <div class="day-tab" onclick="switchDay('922', this)"><span class="day-week">TUE</span><span class="day-num">22</span></div>
+    <div class="day-tab" onclick="switchDay('923', this)"><span class="day-week">WED</span><span class="day-num">23</span></div>
+    <div class="day-tab" onclick="switchDay('924', this)"><span class="day-week">THU</span><span class="day-num">24</span></div>
+    <div class="day-tab" onclick="switchDay('925', this)"><span class="day-week">FRI</span><span class="day-num">25</span></div>
+    <div class="day-tab" onclick="switchDay('926', this)"><span class="day-week">SAT</span><span class="day-num">26</span></div>
+    <div class="day-tab" onclick="switchDay('927', this)"><span class="day-week">SUN</span><span class="day-num">27</span></div>
+    <div class="day-tab" onclick="switchDay('928', this)"><span class="day-week">MON</span><span class="day-num">28</span></div>
+</div>    </div>
     <div id="day-all" class="day-content active">
         <div class="card-custom">
             <h5 class="fw-bold">2026 德瑞挪壯遊 🇪🇺</h5>
@@ -339,6 +403,3 @@ try { render(); } catch(e) { console.log(e); }
 </script>
 </body>
 </html>
-
-
-
