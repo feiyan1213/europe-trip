@@ -304,34 +304,44 @@
 function updateClocks() {
     const now = new Date();
     
-    // 獲取兩地日期對象
-    const options = { hour: '2-digit', minute: '2-digit', hour12: false };
-    const twStr = now.toLocaleString('en-US', { ...options, timeZone: 'Asia/Taipei' });
-    const euStr = now.toLocaleString('en-US', { ...options, timeZone: 'Europe/Berlin' });
+    // 1. 調整格式：加入 second: '2-digit' 來顯示秒數
+    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     
-    // 獲取兩地天數 (用來判斷是否跨日)
-    const twDay = parseInt(now.toLocaleString('en-US', { day: 'numeric', timeZone: 'Asia/Taipei' }));
-    const euDay = parseInt(now.toLocaleString('en-US', { day: 'numeric', timeZone: 'Europe/Berlin' }));
+    // 2. 獲取時間字串
+    const twStr = now.toLocaleTimeString('zh-TW', { ...options, timeZone: 'Asia/Taipei' });
+    const euStr = now.toLocaleTimeString('zh-TW', { ...options, timeZone: 'Europe/Berlin' });
+    
+    // 3. 獲取日期數字判斷跨日 (使用 Intl.DateTimeFormat 較為穩定)
+    const twDay = parseInt(new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Asia/Taipei' }).format(now));
+    const euDay = parseInt(new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Europe/Berlin' }).format(now));
 
-    // 顯示時間
-    document.getElementById('tw-time').innerText = twStr;
-    document.getElementById('eu-time').innerText = euStr;
-
-    // 判斷日期差異標籤
+    // 4. 更新 DOM (加上安全檢查確保 ID 存在)
+    const twTimeEl = document.getElementById('tw-time');
+    const euTimeEl = document.getElementById('eu-time');
     const twLabel = document.getElementById('tw-date-label');
     const euLabel = document.getElementById('eu-date-label');
 
-    if (twDay > euDay) {
-        twLabel.innerText = "明天 "; // 歐洲晚上，台灣已隔天
-        euLabel.innerText = "";
-    } else if (twDay < euDay) {
-        twLabel.innerText = "";
-        euLabel.innerText = " (昨日)"; // 這種情況在歐洲-6小時較少見，除非跨月
-    } else {
-        twLabel.innerText = "";
-        euLabel.innerText = "";
+    if (twTimeEl) twTimeEl.innerText = twStr;
+    if (euTimeEl) euTimeEl.innerText = euStr;
+
+    // 5. 判斷日期差異標籤
+    if (twLabel && euLabel) {
+        if (twDay > euDay) {
+            twLabel.innerText = "明天 "; 
+            euLabel.innerText = "";
+        } else if (twDay < euDay) {
+            twLabel.innerText = "";
+            euLabel.innerText = " (昨日)"; 
+        } else {
+            twLabel.innerText = "";
+            euLabel.innerText = "";
+        }
     }
-}// --- 基礎分頁切換 ---
+}
+
+// --- 關鍵：確保這行在函數外面，這才會每秒執行一次 ---
+setInterval(updateClocks, 1000);
+// --- 基礎分頁切換 ---
 function switchTab(id, el) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -584,4 +594,3 @@ window.onload = function() {
 </script>
 </body>
 </html>
-
