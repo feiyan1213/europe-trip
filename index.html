@@ -136,11 +136,22 @@
 </head>
 <body>
 
-<div class="p-4 text-center bg-white border-bottom">
-    <h1 style="font-size: 1.2rem; letter-spacing: 4px; margin:0; font-weight: 300;">September 2026 EUROPE</h1>
-    <small class="text-muted">Germany • Norway Cruise • Switzerland</small>
+<div class="p-3 text-center bg-white border-bottom">
+    <h1 style="font-size: 1.1rem; letter-spacing: 3px; margin:0; font-weight: 300;">SEPTEMBER 2026 EUROPE</h1>
+    <small class="text-muted d-block mb-2" style="font-size: 0.75rem;">Germany • Norway Cruise • Switzerland</small>
+    
+    <div class="d-flex justify-content-center align-items-center gap-4 py-2" style="background: #fdfdfd; border-radius: 8px; font-family: monospace;">
+        <div>
+            <small class="text-muted d-block" style="font-size: 0.6rem; letter-spacing: 1px;">TAIWAN</small>
+            <span id="tw-time" style="font-size: 1.1rem; font-weight: bold; color: #999;">--:--</span>
+        </div>
+        <div style="height: 25px; width: 1px; background: #eee;"></div>
+        <div>
+            <small class="text-primary d-block" style="font-size: 0.6rem; letter-spacing: 1px;">EUROPE (-6h)</small>
+            <span id="eu-time" style="font-size: 1.1rem; font-weight: bold; color: #2C3E50;">--:--</span>
+        </div>
+    </div>
 </div>
-
 <div id="itinerary" class="content-section active">
     <div class="day-nav-container">
         <div class="day-tab active" onclick="switchDay('all', this)">
@@ -286,6 +297,26 @@
     </nav>
 
 <script>
+// --- 世界時鐘邏輯 ---
+function updateClocks() {
+    const now = new Date();
+    // 台灣時間 (UTC+8)
+    const twTime = new Intl.DateTimeFormat('zh-TW', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Taipei'
+    }).format(now);
+    
+    // 歐洲時間 (中歐夏令時間 UTC+2)
+    const euTime = new Intl.DateTimeFormat('zh-TW', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Europe/Berlin'
+    }).format(now);
+
+    const twEl = document.getElementById('tw-time');
+    const euEl = document.getElementById('eu-time');
+    if(twEl) twEl.innerText = twTime;
+    if(euEl) euEl.innerText = euTime;
+}
+// 每秒更新一次
+setInterval(updateClocks, 1000);
 // --- 基礎分頁切換 ---
 function switchTab(id, el) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
@@ -534,6 +565,7 @@ function exportData() {
 // 4. 只有一個 onload，確保所有事情都在這裡發生
 window.onload = function() {
     initializePage();
+    updateClocks(); // 確保頁面一打開就顯示時間
 };
 </script>
 </body>
