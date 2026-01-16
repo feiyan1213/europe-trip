@@ -24,18 +24,18 @@
         .pack-text { flex-grow: 1; margin-left: 10px; cursor: pointer; font-size: 0.95rem; }
         .pack-text.checked { text-decoration: line-through; color: #aaa; }
 /* 橫向導覽容器 */
-        .day-nav-container {
-            display: flex;
-            overflow-x: auto;
-            background: white;
-            padding: 15px 10px;
-            gap: 15px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid #f0f0f0;
-            -webkit-overflow-scrolling: touch;
-        }
+.day-nav-container {
+    display: flex;
+    overflow-x: auto;
+    background: white;
+    padding: 15px 10px;
+    gap: 15px;
+    position: sticky;
+    top: 105px; /* 這裡要根據標題欄的高度做調整，大約是 100-110px */
+    z-index: 999;
+    border-bottom: 1px solid #f0f0f0;
+    -webkit-overflow-scrolling: touch;
+}
         .day-nav-container::-webkit-scrollbar { display: none; }
 
         /* 日期卡片基礎樣式 */
@@ -136,19 +136,23 @@
 </head>
 <body>
 
-<div class="p-3 text-center bg-white border-bottom">
-    <h1 style="font-size: 1.1rem; letter-spacing: 3px; margin:0; font-weight: 300;">SEPTEMBER 2026 EUROPE</h1>
-    <small class="text-muted d-block mb-2" style="font-size: 0.75rem;">Germany • Norway Cruise • Switzerland</small>
-    
-    <div class="d-flex justify-content-center align-items-center gap-4 py-2" style="background: #fdfdfd; border-radius: 8px; font-family: monospace;">
-        <div>
-            <small class="text-muted d-block" style="font-size: 0.6rem; letter-spacing: 1px;">TAIWAN</small>
-            <span id="tw-time" style="font-size: 1.1rem; font-weight: bold; color: #999;">--:--</span>
-        </div>
-        <div style="height: 25px; width: 1px; background: #eee;"></div>
-        <div>
-            <small class="text-primary d-block" style="font-size: 0.6rem; letter-spacing: 1px;">EUROPE (-6h)</small>
-            <span id="eu-time" style="font-size: 1.1rem; font-weight: bold; color: #2C3E50;">--:--</span>
+<div class="sticky-top bg-white border-bottom shadow-sm">
+    <div class="p-3 text-center">
+        <h1 style="font-size: 1.2rem; letter-spacing: 4px; margin:0; font-weight: 300;">SEPTEMBER 2026 EUROPE</h1>
+        <small class="text-muted d-block mb-2" style="font-size: 0.75rem;">Germany • Norway Cruise • Switzerland</small>
+        
+        <div class="d-flex justify-content-center align-items-center gap-3 py-1" style="background: #f8f9fa; border-radius: 20px; font-family: monospace; max-width: 280px; margin: 0 auto;">
+            <div class="text-end" style="min-width: 100px;">
+                <span id="tw-date-label" style="font-size: 0.5rem; color: #dc3545; vertical-align: middle;"></span>
+                <span id="tw-time" style="font-size: 0.9rem; font-weight: bold; color: #999;">--:--</span>
+                <small style="font-size: 0.5rem; color: #999; display: block; margin-top: -4px;">TAIWAN</small>
+            </div>
+            <div style="height: 15px; width: 1px; background: #ddd;"></div>
+            <div class="text-start" style="min-width: 100px;">
+                <span id="eu-time" style="font-size: 0.9rem; font-weight: bold; color: #2C3E50;">--:--</span>
+                <span id="eu-date-label" style="font-size: 0.5rem; color: #198754; vertical-align: middle;"></span>
+                <small style="font-size: 0.5rem; color: #2C3E50; display: block; margin-top: -4px;">EUROPE</small>
+            </div>
         </div>
     </div>
 </div>
@@ -297,27 +301,37 @@
     </nav>
 
 <script>
-// --- 世界時鐘邏輯 ---
 function updateClocks() {
     const now = new Date();
-    // 台灣時間 (UTC+8)
-    const twTime = new Intl.DateTimeFormat('zh-TW', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Taipei'
-    }).format(now);
     
-    // 歐洲時間 (中歐夏令時間 UTC+2)
-    const euTime = new Intl.DateTimeFormat('zh-TW', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Europe/Berlin'
-    }).format(now);
+    // 獲取兩地日期對象
+    const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+    const twStr = now.toLocaleString('en-US', { ...options, timeZone: 'Asia/Taipei' });
+    const euStr = now.toLocaleString('en-US', { ...options, timeZone: 'Europe/Berlin' });
+    
+    // 獲取兩地天數 (用來判斷是否跨日)
+    const twDay = parseInt(now.toLocaleString('en-US', { day: 'numeric', timeZone: 'Asia/Taipei' }));
+    const euDay = parseInt(now.toLocaleString('en-US', { day: 'numeric', timeZone: 'Europe/Berlin' }));
 
-    const twEl = document.getElementById('tw-time');
-    const euEl = document.getElementById('eu-time');
-    if(twEl) twEl.innerText = twTime;
-    if(euEl) euEl.innerText = euTime;
-}
-// 每秒更新一次
-setInterval(updateClocks, 1000);
-// --- 基礎分頁切換 ---
+    // 顯示時間
+    document.getElementById('tw-time').innerText = twStr;
+    document.getElementById('eu-time').innerText = euStr;
+
+    // 判斷日期差異標籤
+    const twLabel = document.getElementById('tw-date-label');
+    const euLabel = document.getElementById('eu-date-label');
+
+    if (twDay > euDay) {
+        twLabel.innerText = "明天 "; // 歐洲晚上，台灣已隔天
+        euLabel.innerText = "";
+    } else if (twDay < euDay) {
+        twLabel.innerText = "";
+        euLabel.innerText = " (昨日)"; // 這種情況在歐洲-6小時較少見，除非跨月
+    } else {
+        twLabel.innerText = "";
+        euLabel.innerText = "";
+    }
+}// --- 基礎分頁切換 ---
 function switchTab(id, el) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
