@@ -97,6 +97,41 @@
             content: ''; position: absolute; left: -6px; top: 5px; 
             width: 10px; height: 10px; background: var(--accent); border-radius: 50%; 
         }
+/* 同步中心卡片樣式 */
+        .sync-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px dashed #D4A373; /* 使用你定義的亮色作為邊框 */
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .btn-sync {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+            border: none;
+        }
+        .btn-export {
+            background-color: #2C3E50; /* 使用你的 accent 色 */
+            color: white;
+            margin-bottom: 10px;
+        }
+        .btn-import {
+            background-color: white;
+            color: #2C3E50;
+            border: 1px solid #2C3E50;
+        }
+        .btn-sync:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -224,6 +259,22 @@
         <div class="d-grid gap-2">
             <a href="https://www.sbb.ch/en" target="_blank" class="btn btn-sm btn-outline-dark text-start">SBB 瑞士國鐵官網</a>
             <a href="https://www.meteoswiss.admin.ch/" target="_blank" class="btn btn-sm btn-outline-dark text-start">MeteoSwiss 瑞士天氣</a>
+        </div>
+    </div>
+
+    <div class="sync-card">
+        <div class="text-center mb-3">
+            <h6 class="fw-bold mb-1">👫 隊友同步中心</h6>
+            <small class="text-muted">同步記帳紀錄與行李清單</small>
+        </div>
+        <button class="btn-sync btn-export" onclick="exportData()">
+            <i class="fas fa-share-square"></i> 匯出並複製數據代碼
+        </button>
+        <button class="btn-sync btn-import" onclick="importData()">
+            <i class="fas fa-file-import"></i> 貼上朋友的代碼同步
+        </button>
+        <div class="text-center mt-2">
+            <small style="font-size: 0.65rem; color: #999;">注意：同步會覆蓋掉目前的本地數據</small>
         </div>
     </div>
 </div>
@@ -389,9 +440,58 @@ try { render(); } catch(e) { console.log(e); }
             renderPackList();
         }
     }
+function exportData() {
+    const data = {
+        expenses: localStorage.getItem('trip_v2026'),
+        packing: localStorage.getItem('trip_pack_cat')
+    };
+    
+    if (!data.expenses && !data.packing) {
+        alert('目前還沒有數據可以匯出喔！');
+        return;
+    }
 
-    // 初始化執行
-    renderPackList();
+    const code = btoa(encodeURIComponent(JSON.stringify(data)));
+    
+    // 優先使用新式剪貼簿 API，若失敗則回退傳統模式
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert('✅ 成功！同步代碼已複製。\n請傳送給朋友貼上。');
+        }).catch(err => fallbackCopy(code));
+    } else {
+        fallbackCopy(code);
+    }
+}
+
+function fallbackCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        alert('✅ 成功！同步代碼已複製。');
+    } catch (err) {
+        alert('複製失敗，請手動全選複製。');
+    }
+    document.body.removeChild(textArea);
+}
+
+function importData() {
+    const code = prompt("請貼上朋友傳給你的同步代碼：");
+    if (!code) return;
+
+    try {
+        const decoded = JSON.parse(decodeURIComponent(atob(code)));
+        if (decoded.expenses) localStorage.setItem('trip_v2026', decoded.expenses);
+        if (decoded.packing) localStorage.setItem('trip_pack_cat', decoded.packing);
+        
+        alert('同步成功！即將重新載入。');
+        location.reload();
+    } catch (e) {
+        alert('❌代碼無效，請確保複製完整。');
+    }
+}
 </script>
 </body>
 </html>
