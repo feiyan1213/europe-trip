@@ -8,7 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --jp-wash: #F8F9F7; --accent: #2C3E50; --highlight: #D4A373; }
-        body { background: var(--jp-wash); font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; padding-bottom: 80px; color: #333; }
+        body { 
+    background: var(--jp-wash); 
+    /* 使用更現代的字體集，優先調用系統預設的無襯線字體 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif; 
+    padding-bottom: 80px; 
+    color: #333; 
+    letter-spacing: 0.02em; /* 稍微增加字距，提升閱讀舒適度 */
+}
         .content-section { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
         .content-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -132,14 +139,277 @@
             transform: scale(0.98);
             opacity: 0.9;
         }
-    </style>
+.day-content .text-primary {
+    color: #2C3E50 !important; /* <--- 您可以把 #2C3E50 改成任何您想要的深色 */
+}
+[data-theme="dark"] .day-content .text-primary {
+    color: #D4A373 !important; /* <--- 您可以把 #D4A373 改成任何您想要的淺色或金棕色 */
+}
+[data-theme="dark"] {
+    --jp-wash: #121212;
+    --accent: #EAEAEA;
+    --highlight: #D4A373;
+}
+
+[data-theme="dark"] body {
+    color: #ddd;
+}
+
+[data-theme="dark"] .card-custom,
+[data-theme="dark"] .bottom-nav,
+[data-theme="dark"] .day-nav-container {
+    background: #1e1e1e;
+    color: #ddd;
+[data-theme="dark"] .card-custom {
+    background: #1e1e1e;
+    color: #ddd;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* 修正導覽列與標題 */
+[data-theme="dark"] .bottom-nav,
+[data-theme="dark"] .day-nav-container {
+    background: #1a1a1a;
+    border-top-color: #333;
+    border-bottom-color: #333;
+}
+
+/* 修正文字顏色 */
+[data-theme="dark"] .text-primary {
+    color: var(--highlight) !important; /* 將原本的藍色標題改為金棕色，更配夜間模式 */
+}
+
+[data-theme="dark"] .text-muted {
+    color: #888 !important;
+}
+}
+
+[data-theme="dark"] .text-muted {
+    color: #aaa !important;
+}
+
+[data-theme="dark"] .budget-sum {
+    background: #252525; /* 改為深灰色背景 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); /* 加強陰影深度 */
+    border: 1px solid #333; /* 增加微弱邊框區隔 */
+}
+
+[data-theme="dark"] .day-tab .day-week,
+[data-theme="dark"] .day-tab .day-num {
+    color: #777;
+}
+
+[data-theme="dark"] .day-tab.active .day-week,
+[data-theme="dark"] .day-tab.active .day-num {
+    color: #fff;
+}
+/* 🌙 夜間模式：所有按鈕全狀態統一 */
+
+/* A. 平時的狀態：統一為深藍色 */
+[data-theme="dark"] .btn-dark, 
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-sync,
+[data-theme="dark"] .btn-export,
+[data-theme="dark"] .btn-import,
+[data-theme="dark"] .btn-outline-primary,
+[data-theme="dark"] .btn-outline-dark,
+[data-theme="dark"] .btn-info {
+    background-color: #2C3E50 !important;
+    color: #ffffff !important;
+    border: 1px solid #455a64 !important;
+    transition: all 0.2s ease !important; /* 讓變色平滑 */
+}
+
+/* B. 懸停 (Hover) 與 點擊 (Active) 的狀態：統一變深 */
+[data-theme="dark"] .btn-dark:hover, [data-theme="dark"] .btn-dark:active,
+[data-theme="dark"] .btn-primary:hover, [data-theme="dark"] .btn-primary:active,
+[data-theme="dark"] .btn-sync:hover, [data-theme="dark"] .btn-sync:active,
+[data-theme="dark"] .btn-export:hover, [data-theme="dark"] .btn-export:active,
+[data-theme="dark"] .btn-import:hover, [data-theme="dark"] .btn-import:active,
+[data-theme="dark"] .btn-outline-primary:hover, [data-theme="dark"] .btn-outline-primary:active,
+[data-theme="dark"] .btn-outline-dark:hover, [data-theme="dark"] .btn-outline-dark:active,
+[data-theme="dark"] .btn-info:hover, [data-theme="dark"] .btn-info:active {
+    background-color: #1a252f !important; /* 點擊時變成更深的藍黑色 */
+
+    color: #ffffff !important;
+    transform: translateY(1px); /* 輕微下沈感，模擬真實按鈕 */
+}
+/* 🌙 簡約圖標按鈕：也要有統一的回饋感 */
+#themeBtn {
+    background: transparent !important;
+    border: none !important;
+    transition: all 0.2s ease;
+}
+
+#themeBtn:active {
+    transform: scale(0.85); /* 點擊時縮小，這是一個很棒的簡約回饋感 */
+    opacity: 0.7;
+}
+/* 🌙 夜間模式切換動畫 */
+body,
+.sticky-top,
+.card,
+.bg-white {
+    transition: 
+        background-color 0.5s ease,
+        color 0.5s ease,
+        border-color 0.5s ease;
+}
+/* 🌙 標題夜間模式 */
+[data-theme="dark"] .trip-title {
+    color: #f1f3f5;
+}
+
+[data-theme="dark"] .trip-subtitle {
+    color: #adb5bd;
+}
+/* 🌙 主題切換按鈕位置 */
+.theme-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+}
+/* 🌙 Header 夜間背景 */
+[data-theme="dark"] .sticky-top {
+    background-color: #121212 !important;
+    border-bottom-color: #2a2a2a;
+}
+[data-theme="dark"] .sticky-top .p-3 {
+    background-color: #121212;
+}
+/* 🌙 夜間模式－時鐘顏色 */
+[data-theme="dark"] #tw-time {
+    color: #999 !important;  /* 你日間用的淺灰色 */
+}
+
+/* 夜間模式：歐洲時間保留白色或冷色對比 */
+[data-theme="dark"] #eu-time {
+    color: #f1f3f5 !important;
+}
+[data-theme="dark"] #tw-date-label,
+[data-theme="dark"] #eu-date-label {
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .sticky-top small {
+    color: #adb5bd !important;
+}
+/* 🌙 夜間模式－時鐘背景 */
+[data-theme="dark"] .sticky-top .d-flex {
+    background-color: #1e1e1e !important;
+    border: 1px solid #2a2a2a;
+}
+/* 🌙 夜間模式－隊友同步中心卡片 */
+[data-theme="dark"] .sync-card {
+    background: #1e1e1e;           /* 改為深色背景 */
+    border: 1px dashed #444;       /* 邊框顏色調深 */
+    color: #ddd;
+}
+
+[data-theme="dark"] .btn-import {
+    background-color: #2c2c2c;     /* 匯入按鈕背景變深 */
+    color: #EAEAEA;                /* 文字變亮 */
+    border-color: #555;
+}
+/* 🌙 夜間模式－輸入框與下拉選單 */
+[data-theme="dark"] .form-control, 
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .input-group-text {
+    background-color: #2c2c2c !important; /* 深灰色背景 */
+    border-color: #444 !important;        /* 深色邊框 */
+    color: #eee !important;               /* 亮色文字 */
+}
+
+/* 修正輸入框內的 placeholder (提示文字) 顏色 */
+[data-theme="dark"] .form-control::placeholder {
+    color: #777 !important;
+}
+
+/* 修正行李清單的新增類別按鈕邊框 */
+[data-theme="dark"] .input-group .btn-dark {
+    border: 1px solid #444;
+}
+/* 🌙 夜間模式－記帳總額卡片 */
+[data-theme="dark"] .budget-sum {
+    background: #1a252f;           /* 深藍黑色 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+/* 🌙 夜間模式－所有按鈕統一為深藍色系 */
+[data-theme="dark"] .btn-dark, 
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-outline-dark,
+[data-theme="dark"] .btn-outline-secondary,
+[data-theme="dark"] .btn-export,
+[data-theme="dark"] .btn-import,
+[data-theme="dark"] .btn-sync {
+    background-color: #2C3E50 !important; /* 原本「記錄這筆支出」的深藍色 */
+    color: #ffffff !important;
+    border: 1px solid #3d5166 !important;
+}
+
+/* 按鈕點擊時的微調 */
+[data-theme="dark"] .btn:active {
+    background-color: #1a252f !important;
+}
+/* 🌙 夜間模式－輸入框與下拉選單深色化 */
+[data-theme="dark"] .form-control, 
+[data-theme="dark"] .form-select {
+    background-color: #252525 !important;
+    border-color: #444 !important;
+    color: #eeeeee !important;
+}
+
+/* 修正輸入框內的提示文字顏色 */
+[data-theme="dark"] .form-control::placeholder {
+    color: #777 !important;
+}
+/* 🌙 夜間模式－區塊背景深色化 */
+[data-theme="dark"] .sync-card {
+    background: #1e1e1e !important;
+    border: 1px dashed #2C3E50 !important; /* 邊框也用深藍色 */
+}
+
+[data-theme="dark"] .budget-sum {
+    background: #1a252f !important; /* 支出總額改為更深一點的藍黑色 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+/* 🌗 主題切換按鈕固定尺寸 */
+#themeBtn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: none !important; /* 去除邊框 */
+    background: transparent !important; /* 背景透明 */
+    color: #666; /* 日間模式使用中灰色 */
+    transition: transform 0.3s ease;
+}
+
+[data-theme="dark"] #themeBtn {
+    color: #D4A373; /* 夜間模式使用金棕色圖標 */
+}
+
+#themeBtn:active {
+    transform: scale(0.8); /* 點擊時的縮放反饋 */
+}    </style>
 </head>
 <body>
 
 <div class="sticky-top bg-white border-bottom shadow-sm">
     <div class="p-3 text-center">
-        <h1 style="font-size: 1.2rem; letter-spacing: 4px; margin:0; font-weight: 300;">SEPTEMBER 2026 EUROPE</h1>
-        <small class="text-muted d-block mb-2" style="font-size: 0.75rem;">Germany • Norway Cruise • Switzerland • Italy</small>
+<h1 class="trip-title"
+    style="font-size: 1.2rem; letter-spacing: 4px; margin:0; font-weight: 300;">
+    SEPTEMBER 2026 EUROPE
+</h1>
+
+<small class="trip-subtitle d-block mb-2"
+       style="font-size: 0.75rem;">
+    Germany • Norway Cruise • Switzerland • Italy
+</small>
         
         <div class="d-flex justify-content-center align-items-center gap-3 py-1" style="background: #f8f9fa; border-radius: 20px; font-family: monospace; max-width: 280px; margin: 0 auto;">
             <div class="text-end" style="min-width: 100px;">
@@ -154,6 +424,14 @@
                 <small style="font-size: 0.5rem; color: #2C3E50; display: block; margin-top: -4px;">EUROPE</small>
             </div>
         </div>
+<div class="theme-toggle">
+<button id="themeBtn"
+        class="btn btn-sm btn-outline-secondary"
+        onclick="toggleTheme()"
+        style="font-size: 0.9rem; line-height: 1;">
+    ☾
+</button>
+</div>
     </div>
 </div>
 <div id="itinerary" class="content-section active">
@@ -190,30 +468,28 @@
         </div>
     </div>
 
-    <div id="day-910" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 啟程飛行</h6><div class="time-node"><b>19:10 高雄 (KHH)</b><br><small>搭乘前往香港 (1h 40m)</small></div><div class="time-node mt-3"><b>23:55 香港 (HKG)</b><br><small>前往法蘭克福 (13h 20m)</small></div></div></div>
-    <div id="day-911" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🇩🇪 抵達德國</h6><div class="time-node"><b>07:15 抵達 FRA T2</b></div><div class="time-node mt-3"><b>09:41 ICE 高鐵</b><br><small>法蘭克福 ➔ 15:21 抵達基爾 (Kiel)</small></div></div></div>
-    <div id="day-912" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 登船：基爾 Kiel</h6><p class="small">下午 19:00 啟航，開啟挪威峽灣之旅。</p></div></div>
+    <div id="day-910" class="day-content" data-day="910"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 啟程飛行</h6><div class="time-node"><b>19:10 高雄 (KHH)</b><br><small>搭乘前往香港 (1h 40m)</small></div><div class="time-node mt-3"><b>23:55 香港 (HKG)</b><br><small>前往法蘭克福 (13h 20m)</small></div></div></div>
+    <div id="day-911" class="day-content" data-day="911"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🇩🇪 抵達德國</h6><div class="time-node"><b>07:15 抵達 FRA T2</b></div><div class="time-node mt-3"><b>09:41 ICE 高鐵</b><br><small>法蘭克福 ➔ 15:21 抵達基爾 (Kiel)</small></div></div></div>
+    <div id="day-912" class="day-content" data-day="912"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 登船：基爾 Kiel</h6><p class="small">下午 19:00 啟航，開啟挪威峽灣之旅。</p></div></div>
     
-    <div id="day-913" class="day-content"><div class="card-custom"><h6>🚢 郵輪航行中 - 哥本哈根</h6></div></div>
-    <div id="day-914" class="day-content"><div class="card-custom"><h6>🚢 郵輪航行中 - 海上巡航</h6></div></div>
-    <div id="day-915" class="day-content"><div class="card-custom"><h6>🚢 郵輪航行中 - 希雷斯利特</h6></div></div>
-    <div id="day-916" class="day-content"><div class="card-custom"><h6>🚢 郵輪航行中 - 奧勒松</h6></div></div>
-    <div id="day-917" class="day-content"><div class="card-custom"><h6>🚢 郵輪航行中 - 弗洛姆</h6></div></div>
-    <div id="day-918" class="day-content"><div class="card-custom"><h6>🚢 郵輪航行中 - 海上巡航</h6></div></div>
+    <div id="day-913" class="day-content" data-day="913"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 哥本哈根</h6></div></div>
+    <div id="day-914" class="day-content" data-day="914"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 海上巡航</h6></div></div>
+    <div id="day-915" class="day-content" data-day="915"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 希雷斯利特</h6></div></div>
+    <div id="day-916" class="day-content" data-day="916"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 奧勒松</h6></div></div>
+    <div id="day-917" class="day-content" data-day="917"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 弗洛姆</h6></div></div>
+    <div id="day-918" class="day-content" data-day="918"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 海上巡航</h6></div></div>
 
-    <div id="day-919" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 漢堡 ➔ 蘇黎世 ➔ 琉森</h6><p class="small">抵達瑞士，傍晚逛老城區與卡貝爾橋。</p></div></div>
-    <div id="day-920" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚠 鐵力士山 (Titlis)</h6><p class="small">下午移動至溫根 (Wengen) 入住。</p></div></div>
-    <div id="day-921" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏔️ 健行：Männlichen ➔ 小夏戴克</h6><p class="small">全景健行 (2h) ➔ 格林德瓦 ➔ First 山。</p></div></div>
-    <div id="day-922" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏔️ 雪朗峰 (Schilthorn)</h6><p class="small">或前往厄西嫩湖 (Oeschinensee)。宿溫根。</p></div></div>
-    <div id="day-923" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 前往策馬特 (Zermatt)</h6><p class="small">入住策馬特，傍晚逛鎮上商店。</p></div></div>
-    <div id="day-924" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 冰川天堂 (Glacier Paradise)</h6><p class="small">策馬特周邊景點探索。</p></div></div>
-    <div id="day-925" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 策馬特周邊</h6><p class="small">Sunnegga 五湖健行或鎮上放鬆。</p></div></div>
-    <div id="day-926" class="day-content"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🇮🇹 前往米蘭 (Milan)</h6><p class="small">經 Visp 轉車，入住米蘭。</p></div></div>
-    <div id="day-927" class="day-content"><div class="card-custom border-start border-4 border-danger"><h6 class="fw-bold text-danger mb-3">✈️ 賦歸 (MXP - HKG)</h6><div class="time-node"><b>12:45 米蘭 (MXP) 起飛</b><br><small>前往香港 (11h 40m)</small></div></div></div>
-    <div id="day-928" class="day-content"><div class="card-custom"><h6 class="fw-bold text-success mb-3">🏠 抵達高雄</h6><div class="time-node"><b>06:25 抵達香港 (HKG)</b></div><div class="time-node mt-3"><b>08:35 香港 ➔ 10:15 高雄</b></div></div></div>
+    <div id="day-919" class="day-content" data-day="919"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 漢堡 ➔ 蘇黎世 ➔ 琉森</h6><p class="small">抵達瑞士，傍晚逛老城區與卡貝爾橋。</p></div></div>
+    <div id="day-920" class="day-content" data-day="920"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚠 鐵力士山 (Titlis)</h6><p class="small">下午移動至溫根 (Wengen) 入住。</p></div></div>
+    <div id="day-921" class="day-content" data-day="921"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏔️ 健行：Männlichen ➔ 小夏戴克</h6><p class="small">全景健行 (2h) ➔ 格林德瓦 ➔ First 山。</p></div></div>
+    <div id="day-922" class="day-content" data-day="922"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏔️ 雪朗峰 (Schilthorn)</h6><p class="small">或前往厄西嫩湖 (Oeschinensee)。宿溫根。</p></div></div>
+    <div id="day-923" class="day-content" data-day="923"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 前往策馬特 (Zermatt)</h6><p class="small">入住策馬特，傍晚逛鎮上商店。</p></div></div>
+    <div id="day-924" class="day-content" data-day="924"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 冰川天堂 (Glacier Paradise)</h6><p class="small">策馬特周邊景點探索。</p></div></div>
+    <div id="day-925" class="day-content" data-day="925"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 策馬特周邊</h6><p class="small">Sunnegga 五湖健行或鎮上放鬆。</p></div></div>
+    <div id="day-926" class="day-content" data-day="926"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🇮🇹 前往米蘭 (Milan)</h6><p class="small">經 Visp 轉車，入住米蘭。</p></div></div>
+    <div id="day-927" class="day-content" data-day="927"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 賦歸 (MXP - HKG)</h6><div class="time-node"><b>12:45 米蘭 (MXP) 起飛</b><br><small>前往香港 (11h 40m)</small></div></div></div>
+    <div id="day-928" class="day-content" data-day="928"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏠 抵達高雄</h6><div class="time-node"><b>06:25 抵達香港 (HKG)</b></div><div class="time-node mt-3"><b>08:35 香港 ➔ 10:15 高雄</b></div></div></div>
 </div> 
-</div>
-</div>
 
 <div id="budget" class="content-section">
     <div class="budget-sum">
@@ -279,7 +555,7 @@
 
     <div class="sync-card">
         <div class="text-center mb-3">
-            <h6 class="fw-bold mb-1">👫 隊友同步中心</h6>
+            <h6 class="fw-bold mb-1"> 隊友同步中心</h6>
             <small class="text-muted">同步記帳紀錄與行李清單</small>
         </div>
         <button class="btn-sync btn-export" onclick="exportData()">
@@ -551,7 +827,6 @@ function importData() {
         alert('🚀 同步成功！即將更新畫面。');
         
         // 關鍵：先刷新數據再重新整理
-        initializePage();
         location.reload(); 
     } catch (e) {
         console.error(e);
@@ -588,9 +863,76 @@ function exportData() {
 
 // 4. 只有一個 onload，確保所有事情都在這裡發生
 window.onload = function() {
+    const savedTheme = localStorage.getItem('trip_theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+    }
     initializePage();
     updateClocks(); // 確保頁面一打開就顯示時間
 };
+initScrollSpy();
+function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand("copy");
+        alert("✅ 同步代碼已複製（備用模式）");
+    } catch (e) {
+        alert("❌ 無法自動複製，請手動複製");
+        prompt("請手動複製以下代碼：", text);
+    }
+    document.body.removeChild(textarea);
+}
+function initScrollSpy() {
+    const sections = document.querySelectorAll('.day-content[data-day]');
+    const tabs = document.querySelectorAll('.day-tab');
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const dayId = entry.target.dataset.day;
+
+                // 切換 tab 高亮
+                tabs.forEach(t => t.classList.remove('active'));
+                const activeTab = document.querySelector(
+                    `.day-tab[onclick*="'${dayId}'"]`
+                );
+                if (activeTab) activeTab.classList.add('active');
+            }
+        });
+    }, {
+        rootMargin: '-40% 0px -50% 0px', // 重點：決定何時算「進入」
+        threshold: 0
+    });
+
+    sections.forEach(sec => observer.observe(sec));
+}
+function toggleTheme() {
+function updateThemeIcon(theme) {
+    const btn = document.getElementById('themeBtn');
+    if (!btn) return;
+
+    // 線條風 icon（非 emoji）
+    btn.textContent = theme === 'dark' ? '☀︎' : '☾';
+}
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('trip_theme', next);
+
+    updateThemeIcon(next);
+}
+function updateThemeIcon(theme) {
+    const btn = document.getElementById('themeBtn');
+    if (!btn) return;
+
+    btn.textContent = theme === 'dark' ? '☀︎' : '☾';
+}
 </script>
 </body>
 </html>
