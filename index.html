@@ -96,6 +96,55 @@
             background-color: #8B0000; /* 深紅色小點 */
             border-radius: 50%;
         }
+/* 住宿資訊固定框 */
+/* 住宿資訊固定框 */
+.accommodation-bar {
+    position: fixed;
+    bottom: 65px; 
+    left: 15px;
+    right: 15px;
+    background: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+    z-index: 998;
+    display: none; 
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #eee;
+}
+
+[data-theme="dark"] .accommodation-bar {
+    background: #1e1e1e;
+    border-color: #333;
+}
+
+/* 核心修正：地圖按鈕樣式 */
+.accommodation-bar .btn-map {
+    background-color: #2C3E50 !important; /* 強制使用您的主題深藍色 */
+    color: #ffffff !important;           /* 強制文字為白色，防止變成藍色字 */
+    border-radius: 20px;
+    font-size: 0.75rem;
+    padding: 6px 15px;
+    text-decoration: none !important;    /* 移除底線 */
+    border: 1px solid #3d5166 !important;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* 點擊效果：與全站按鈕一致 */
+.accommodation-bar .btn-map:active {
+    transform: translateY(1px) scale(0.95);
+    background-color: #1a252f !important; /* 點擊時變深 */
+    opacity: 0.9;
+}
+
+/* 夜間模式下的微調 */
+[data-theme="dark"] .accommodation-bar .btn-map {
+    background-color: #2C3E50 !important;
+    border-color: #455a64 !important;
+}
 /* --- 1. 行程內容顯示控制 --- */
 .day-content { display: none; animation: fadeIn 0.4s ease; }
 .day-content.active { display: block; }
@@ -467,6 +516,15 @@ body,
 #themeBtn:active {
     transform: scale(0.8); /* 點擊時的縮放反饋 */
 }    
+/* 強制行李清單標題使用主題定義的 accent 顏色 */
+#pack-list-container .text-primary {
+    color: var(--accent) !important;
+}
+
+/* 確保夜間模式下也同步跟隨主題色 */
+[data-theme="dark"] #pack-list-container .text-primary {
+    color: var(--highlight) !important;
+}
 </style>
 </head>
 <body>
@@ -1081,6 +1139,48 @@ function updateThemeIcon(theme) {
 
     btn.textContent = theme === 'dark' ? '☀︎' : '☾';
 }
+// 住宿資料庫 (請根據您的實際飯店名稱與 Google Map 連結修改)
+const hotelData = {
+    "911": { name: "Hotel Liegeplatz 13 Kiel by Premiere Classe", map: "https://maps.app.goo.gl/uiViyTyUQAfHDNbq6" },
+    "912": { name: "MSC Cruise Ship", map: "https://maps.app.goo.gl/yAHd1n7yvGv2XG7m8" },
+    "919": { name: "Barabas Luzern", map: "https://maps.app.goo.gl/NdmS1o8y9ZsDfiYu5" },
+    "920": { name: "Hotel Victoria Lauberhorn Wengen", map: "https://maps.app.goo.gl/JUk59ZPRiiRCN5Aw9" },
+    "921": { name: "Hotel Victoria Lauberhorn Wengen", map: "https://maps.app.goo.gl/JUk59ZPRiiRCN5Aw9" },
+    "922": { name: "Hotel Victoria Lauberhorn Wengen", map: "https://maps.app.goo.gl/JUk59ZPRiiRCN5Aw9" },
+    "923": { name: "Zermatt Hotel Alpina", map: "https://maps.app.goo.gl/vPqfrLinN6M45mbN8" },
+    "924": { name: "Zermatt Hotel Alpina", map: "https://maps.app.goo.gl/vPqfrLinN6M45mbN8" },
+    "925": { name: "Zermatt Hotel Alpina", map: "https://maps.app.goo.gl/vPqfrLinN6M45mbN8" },
+    "926": { name: "Hostel INN PETRELLA Milan", map: "https://maps.app.goo.gl/E8gig159c8U69n2x9" },
+    "927": { name: "Milan Malpensa Airport MXP", map: "https://maps.app.goo.gl/PuzkC7L5KWpmE93v5" },
+    "928": { name: "Home", map: "https://maps.app.goo.gl/UNuPB1CaheDYPV9h9" },
+    
+};
+// 修改原有的 switchDay 函數
+const originalSwitchDay = switchDay;
+switchDay = function(dayId, el) {
+    originalSwitchDay(dayId, el); // 執行原本的換頁邏輯
+    
+    const hotelBar = document.getElementById('hotel-bar');
+    const hotelNameEl = document.getElementById('hotel-name');
+    const hotelLinkEl = document.getElementById('hotel-link');
+
+    if (dayId !== 'all' && hotelData[dayId]) {
+        hotelNameEl.innerText = hotelData[dayId].name;
+        hotelLinkEl.href = hotelData[dayId].map;
+        hotelBar.style.display = 'flex'; // 顯示框
+    } else {
+        hotelBar.style.display = 'none'; // 總覽頁或沒資料時隱藏
+    }
+};
 </script>
+<div id="hotel-bar" class="accommodation-bar">
+    <div>
+        <small class="text-muted d-block" style="font-size: 0.65rem;">今晚住宿</small>
+        <span id="hotel-name" class="hotel-name">載入中...</span>
+    </div>
+    <a id="hotel-link" href="#" target="_blank" class="btn-map">
+        <i class="fas fa-map-marker-alt"></i> 
+    </a>
+</div>
 </body>
 </html>
