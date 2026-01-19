@@ -96,14 +96,85 @@
             background-color: #8B0000; /* 深紅色小點 */
             border-radius: 50%;
         }
-        /* 行程內容顯示控制 */
-        .day-content { display: none; animation: fadeIn 0.4s ease; }
-        .day-content.active { display: block; }
-        .time-node { border-left: 2px solid #ddd; margin-left: 10px; padding-left: 20px; position: relative; }
-        .time-node::before { 
-            content: ''; position: absolute; left: -6px; top: 5px; 
-            width: 10px; height: 10px; background: var(--accent); border-radius: 50%; 
-        }
+/* --- 1. 行程內容顯示控制 --- */
+.day-content { display: none; animation: fadeIn 0.4s ease; }
+.day-content.active { display: block; }
+/* 🌟 時間軸淡入動畫（取代原本 time-item 設定） */
+/* 🌟 時間軸共用基準線（不要改這個值） */
+:root {
+    --timeline-x: 16px;
+}
+.time-item {
+    position: relative;
+    padding-left: 32px;
+    padding-top: 12px;
+    padding-bottom: 24px;
+
+    opacity: 0;
+    transform: translateY(6px);
+    animation: timelineFade 0.6s ease forwards;
+}
+
+/* 🌟 用偽元素畫線（關鍵） */
+.time-item::before {
+    content: '';
+    position: absolute;
+    left: 15px;   /* ⭐ 關鍵 */
+    top: 12px;
+    bottom: -24px;              /* ⭐ 改成不是 0 */
+    width: 2px;
+    background-color: #ddd;
+}
+/* 每一筆稍微錯開出現 */
+.time-item:nth-child(1) { animation-delay: 0.05s; }
+.time-item:nth-child(2) { animation-delay: 0.15s; }
+.time-item:nth-child(3) { animation-delay: 0.25s; }
+.time-item:nth-child(4) { animation-delay: 0.35s; }
+
+/* 圓點同步動畫 */
+.time-node {
+    position: absolute;
+    left: calc(var(--timeline-x) - 6px);
+    top: 12px;
+    width: 12px;
+    height: 12px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--jp-wash);
+
+    transform: scale(0.6);
+    opacity: 0;
+    animation: nodePop 0.4s ease forwards;
+    animation-delay: inherit;
+}
+
+/* 最後一筆不畫線 */
+.time-item:last-child::before {
+    display: none;
+}
+
+/* 動畫關鍵影格 */
+@keyframes timelineFade {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes nodePop {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+/* 夜間模式適配 */
+[data-theme="dark"] .time-item::before {
+    background-color: #444;
+}
+[data-theme="dark"] .time-node { 
+    background-color: var(--highlight) !important; 
+    border-color: #1e1e1e; 
+}
 /* 同步中心卡片樣式 */
         .sync-card {
             background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
@@ -395,7 +466,8 @@ body,
 
 #themeBtn:active {
     transform: scale(0.8); /* 點擊時的縮放反饋 */
-}    </style>
+}    
+</style>
 </head>
 <body>
 
@@ -468,27 +540,103 @@ body,
         </div>
     </div>
 
-    <div id="day-910" class="day-content" data-day="910"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 啟程飛行</h6><div class="time-node"><b>19:10 高雄 (KHH)</b><br><small>搭乘前往香港 (1h 40m)</small></div><div class="time-node mt-3"><b>23:55 香港 (HKG)</b><br><small>前往法蘭克福 (13h 20m)</small></div></div></div>
-    <div id="day-911" class="day-content" data-day="911"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🇩🇪 抵達德國</h6><div class="time-node"><b>07:15 抵達 FRA T2</b></div><div class="time-node mt-3"><b>09:41 ICE 高鐵</b><br><small>法蘭克福 ➔ 15:21 抵達基爾 (Kiel)</small></div></div></div>
-    <div id="day-912" class="day-content" data-day="912"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 登船：基爾 Kiel</h6><p class="small">下午 19:00 啟航，開啟挪威峽灣之旅。</p></div></div>
-    
-    <div id="day-913" class="day-content" data-day="913"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 哥本哈根</h6></div></div>
-    <div id="day-914" class="day-content" data-day="914"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 海上巡航</h6></div></div>
-    <div id="day-915" class="day-content" data-day="915"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 希雷斯利特</h6></div></div>
-    <div id="day-916" class="day-content" data-day="916"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 奧勒松</h6></div></div>
-    <div id="day-917" class="day-content" data-day="917"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 弗洛姆</h6></div></div>
-    <div id="day-918" class="day-content" data-day="918"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 郵輪航行中 - 海上巡航</h6></div></div>
+<div id="day-910" class="day-content" data-day="910">
+    <div class="card-custom">
+        <h6 class="fw-bold text-primary mb-3">✈️ 啟程飛行</h6>
+        
+        <div class="time-item">
+            <div class="time-node"></div> <div class="fw-bold">19:10 高雄 (KHH)</div>
+            <div class="small text-muted">搭乘前往香港 (1h 40m)</div>
+        </div>
 
-    <div id="day-919" class="day-content" data-day="919"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 漢堡 ➔ 蘇黎世 ➔ 琉森</h6><p class="small">抵達瑞士，傍晚逛老城區與卡貝爾橋。</p></div></div>
-    <div id="day-920" class="day-content" data-day="920"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚠 鐵力士山 (Titlis)</h6><p class="small">下午移動至溫根 (Wengen) 入住。</p></div></div>
-    <div id="day-921" class="day-content" data-day="921"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏔️ 健行：Männlichen ➔ 小夏戴克</h6><p class="small">全景健行 (2h) ➔ 格林德瓦 ➔ First 山。</p></div></div>
-    <div id="day-922" class="day-content" data-day="922"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏔️ 雪朗峰 (Schilthorn)</h6><p class="small">或前往厄西嫩湖 (Oeschinensee)。宿溫根。</p></div></div>
-    <div id="day-923" class="day-content" data-day="923"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 前往策馬特 (Zermatt)</h6><p class="small">入住策馬特，傍晚逛鎮上商店。</p></div></div>
-    <div id="day-924" class="day-content" data-day="924"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 冰川天堂 (Glacier Paradise)</h6><p class="small">策馬特周邊景點探索。</p></div></div>
-    <div id="day-925" class="day-content" data-day="925"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🗻 策馬特周邊</h6><p class="small">Sunnegga 五湖健行或鎮上放鬆。</p></div></div>
-    <div id="day-926" class="day-content" data-day="926"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🇮🇹 前往米蘭 (Milan)</h6><p class="small">經 Visp 轉車，入住米蘭。</p></div></div>
-    <div id="day-927" class="day-content" data-day="927"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">✈️ 賦歸 (MXP - HKG)</h6><div class="time-node"><b>12:45 米蘭 (MXP) 起飛</b><br><small>前往香港 (11h 40m)</small></div></div></div>
-    <div id="day-928" class="day-content" data-day="928"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🏠 抵達高雄</h6><div class="time-node"><b>06:25 抵達香港 (HKG)</b></div><div class="time-node mt-3"><b>08:35 香港 ➔ 10:15 高雄</b></div></div></div>
+        <div class="time-item">
+            <div class="time-node"></div>
+            <div class="fw-bold">23:55 香港 (HKG)</div>
+            <div class="small text-muted">前往法蘭克福 (13h 20m)</div>
+        </div>
+        
+    </div>
+</div>
+<div id="day-911" class="day-content" data-day="911">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🇩🇪 抵達德國</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">07:15 抵達 FRA T2</div></div>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">09:41 ICE 高鐵</div><div class="small text-muted">法蘭克福 ➔ 15:21 抵達基爾 (Kiel)</div></div>
+        </div>
+    </div>
+    <div id="day-912" class="day-content" data-day="912">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🚢 登船：基爾 Kiel</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">19:00 啟航</div><div class="small text-muted">開啟挪威峽灣之旅</div></div>
+        </div>
+    </div>
+    <div id="day-913" class="day-content" data-day="913"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 哥本哈根</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
+    <div id="day-914" class="day-content" data-day="914"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 海上巡航</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
+    <div id="day-915" class="day-content" data-day="915"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 希雷斯利特</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
+    <div id="day-916" class="day-content" data-day="916"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 奧勒松</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
+    <div id="day-917" class="day-content" data-day="917"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 弗洛姆</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
+    <div id="day-918" class="day-content" data-day="918"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 海上巡航</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
+    <div id="day-919" class="day-content" data-day="919">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">✈️ 漢堡 ➔ 蘇黎世 ➔ 琉森</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">抵達瑞士</div><div class="small text-muted">傍晚逛老城區與卡貝爾橋</div></div>
+        </div>
+    </div>
+    <div id="day-920" class="day-content" data-day="920">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🚠 鐵力士山 (Titlis)</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">景點遊覽</div><div class="small text-muted">下午移動至溫根 (Wengen) 入住</div></div>
+        </div>
+    </div>
+    <div id="day-921" class="day-content" data-day="921">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🏔️ 健行：Männlichen ➔ 小夏戴克</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">全景健行 (2h)</div><div class="small text-muted">格林德瓦 ➔ First 山</div></div>
+        </div>
+    </div>
+    <div id="day-922" class="day-content" data-day="922">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🏔️ 雪朗峰 (Schilthorn)</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">景點探索</div><div class="small text-muted">或前往厄西嫩湖 (Oeschinensee)。宿溫根</div></div>
+        </div>
+    </div>
+    <div id="day-923" class="day-content" data-day="923">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🗻 前往策馬特 (Zermatt)</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">入住策馬特</div><div class="small text-muted">傍晚逛鎮上商店</div></div>
+        </div>
+    </div>
+    <div id="day-924" class="day-content" data-day="924">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🗻 冰川天堂 (Glacier Paradise)</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">景點遊覽</div><div class="small text-muted">策馬特周邊景點探索</div></div>
+        </div>
+    </div>
+    <div id="day-925" class="day-content" data-day="925">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🗻 策馬特周邊</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">五湖健行</div><div class="small text-muted">Sunnegga 五湖健行或鎮上放鬆</div></div>
+        </div>
+    </div>
+    <div id="day-926" class="day-content" data-day="926">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🇮🇹 前往米蘭 (Milan)</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">移動日</div><div class="small text-muted">經 Visp 轉車，入住米蘭</div></div>
+        </div>
+    </div>
+    <div id="day-927" class="day-content" data-day="927">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">✈️ 賦歸 (MXP - HKG)</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">12:45 米蘭 (MXP) 起飛</div><div class="small text-muted">前往香港 (11h 40m)</div></div>
+        </div>
+    </div>
+    <div id="day-928" class="day-content" data-day="928">
+        <div class="card-custom">
+            <h6 class="fw-bold text-primary mb-3">🏠 抵達高雄</h6>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">06:25 抵達香港 (HKG)</div></div>
+            <div class="time-item"><div class="time-node"></div><div class="fw-bold">08:35 香港 ➔ 10:15 高雄</div></div>
+        </div>
+    </div>
 </div> 
 
 <div id="budget" class="content-section">
@@ -936,4 +1084,3 @@ function updateThemeIcon(theme) {
 </script>
 </body>
 </html>
-
