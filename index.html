@@ -525,6 +525,41 @@ body,
 [data-theme="dark"] #pack-list-container .text-primary {
     color: var(--highlight) !important;
 }
+/* 行程標題列（可點擊） */
+.time-header {
+    display: inline-flex;          /* ⭐ 關鍵 */
+    align-items: center;
+    gap: 6px;                      /* 文字與箭頭距離 */
+    cursor: pointer;
+    user-select: none;
+}
+/* 下拉箭頭 */
+.toggle-icon {
+    font-size: 0.9rem;
+    color: #999;
+    transition: transform 0.3s ease;
+}
+
+/* 細節內容（預設收合） */
+.time-detail {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.35s ease;
+    margin-left: 0; /* 不影響時間軸 */
+}
+
+/* 展開狀態 */
+.time-item.open .time-detail {
+    max-height: 300px;   /* 足夠大即可 */
+    opacity: 1;
+    margin-top: 8px;
+}
+
+/* 箭頭旋轉 */
+.time-item.open .toggle-icon {
+    transform: rotate(180deg);
+}
 </style>
 </head>
 <body>
@@ -600,20 +635,39 @@ body,
 
 <div id="day-910" class="day-content" data-day="910">
     <div class="card-custom">
-        <h6 class="fw-bold text-primary mb-3">✈️ 啟程飛行</h6>
-        
-        <div class="time-item">
-            <div class="time-node"></div> <div class="fw-bold">19:10 高雄 (KHH)</div>
-            <div class="small text-muted">搭乘前往香港 (1h 40m)</div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-primary m-0">啟程飛行</h6>
         </div>
-
         <div class="time-item">
             <div class="time-node"></div>
-            <div class="fw-bold">23:55 香港 (HKG)</div>
-            <div class="small text-muted">前往法蘭克福 (13h 20m)</div>
-        </div>        
-    </div>
-</div>
+
+            <div class="time-header">
+                <div class="fw-bold">19:00 高雄小港機場</div>
+                <span class="toggle-icon">▾</span>
+            </div>
+
+            <div class="time-detail">
+                <div class="small text-muted">
+                    出境、準備起飛、貴賓室
+                </div>
+            </div>
+        </div>
+        <div class="time-item">
+            <div class="time-node"></div>
+
+            <div class="time-header">
+                <div class="fw-bold">23:00 抵達香港機場</div>
+                <span class="toggle-icon">▾</span>
+            </div>
+
+            <div class="time-detail">
+                <div class="small text-muted">
+                    等待轉機 (Kiel)
+                </div>
+            </div>
+        </div>
+    </div> <!-- ⭐ card-custom -->
+</div>     <!-- ⭐ day-910 -->
 <div id="day-911" class="day-content" data-day="911">
     <div class="card-custom">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -627,10 +681,36 @@ body,
                 </a>
             </div>
         </div>
-        <div class="time-item"><div class="time-node"></div><div class="fw-bold">07:15 抵達 FRA T2</div></div>
-        <div class="time-item"><div class="time-node"></div><div class="fw-bold">09:41 ICE 高鐵</div><div class="small text-muted">法蘭克福 ➔ 15:21 抵達基爾 (Kiel)</div></div>
-    </div>
-</div>
+        <div class="time-item">
+            <div class="time-node"></div>
+
+            <div class="time-header">
+                <div class="fw-bold">07:15 抵達 FRA T2</div>
+                <span class="toggle-icon">▾</span>
+            </div>
+
+            <div class="time-detail">
+                <div class="small text-muted">
+                    抵達後通關、領取行李
+                </div>
+            </div>
+        </div>
+        <div class="time-item">
+            <div class="time-node"></div>
+
+            <div class="time-header">
+                <div class="fw-bold">09:41 ICE 高鐵</div>
+                <span class="toggle-icon">▾</span>
+            </div>
+
+            <div class="time-detail">
+                <div class="small text-muted">
+                    法蘭克福 ➔ 15:21 抵達基爾 (Kiel)
+                </div>
+            </div>
+        </div>
+    </div> <!-- ⭐ card-custom -->
+</div>     <!-- ⭐ day-911 -->
 <div id="day-912" class="day-content" data-day="912">
     <div class="card-custom">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -639,14 +719,41 @@ body,
                 <a href="https://www.yr.no/en" target="_blank" class="btn btn-sm btn-outline-dark" style="font-size: 0.65rem; padding: 2px 6px;">
                     <i class="fas fa-sun"></i>
                 </a>
-                <a href="(地圖連結)" target="_blank" class="btn btn-sm btn-outline-dark" style="font-size: 0.65rem; padding: 2px 6px;">
+                <a href="https://maps.app.goo.gl/xjPNo9XXZtwXu1qR7" target="_blank" class="btn btn-sm btn-outline-dark" style="font-size: 0.65rem; padding: 2px 6px;">
                     <i class="fas fa-map-marked-alt"></i>
                 </a>
             </div>
         </div>
-        <div class="time-item"><div class="time-node"></div><div class="fw-bold">19:00 啟航</div><div class="small text-muted">開啟挪威峽灣之旅</div></div>
-    </div>
-</div>
+        <div class="time-item">
+            <div class="time-node"></div>
+
+            <div class="time-header">
+                <div class="fw-bold">16:00 MSC EURIBIA登船</div>
+                <span class="toggle-icon">▾</span>
+            </div>
+
+            <div class="time-detail">
+                <div class="small text-muted">
+                    Terminal MSC Kiel 
+                </div>
+            </div>
+        </div>
+        <div class="time-item">
+            <div class="time-node"></div>
+
+            <div class="time-header">
+                <div class="fw-bold">19:00 啟航</div>
+                <span class="toggle-icon">▾</span>
+            </div>
+
+            <div class="time-detail">
+                <div class="small text-muted">
+                    房號10103
+                </div>
+            </div>
+        </div>
+    </div> <!-- ⭐ card-custom -->
+</div>     <!-- ⭐ day-912 -->
     <div id="day-913" class="day-content" data-day="913"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 哥本哈根</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
     <div id="day-914" class="day-content" data-day="914"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 海上巡航</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
     <div id="day-915" class="day-content" data-day="915"><div class="card-custom"><h6 class="fw-bold text-primary mb-3">🚢 希雷斯利特</h6><div class="time-item"><div class="time-node"></div><div class="fw-bold">郵輪航行中</div></div></div></div>
@@ -1279,6 +1386,12 @@ switchDay = function(dayId, el) {
     originalSwitchDay(dayId, el); 
     refreshHotelBar(); // 直接執行剛寫好的工具
 };
+document.querySelectorAll('.time-header').forEach(header => {
+    header.addEventListener('click', () => {
+        const item = header.closest('.time-item');
+        item.classList.toggle('open');
+    });
+});
 </script>
 <div id="hotel-bar" class="accommodation-bar">
     <div>
