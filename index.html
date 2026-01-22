@@ -588,30 +588,6 @@ body,
     color: #eee;
     border-color: #333;
 }
-#todayBtn {
-    font-size: 0.75rem;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid #ddd;
-    background: #fff;
-    color: #555;
-    line-height: 1;
-    transition: all 0.2s ease;
-}
-
-#todayBtn:hover {
-    background: #f3f3f3;
-}
-[data-theme="dark"] #todayBtn {
-    background: rgba(255,255,255,0.06);
-    color: #ddd;
-    border-color: rgba(255,255,255,0.15);
-}
-
-[data-theme="dark"] #todayBtn:hover {
-    background: rgba(255,255,255,0.12);
-}
-
 </style>
 </head>
 <body>
@@ -642,16 +618,13 @@ body,
             </div>
         </div>
 <div class="theme-toggle">
-<div class="theme-toggle d-flex align-items-center gap-2">
-    <!-- Today -->
-    <button id="todayBtn" onclick="goToToday()">
-        Today · <span id="todayDate">--/--</span>
-    </button>
 <button id="themeBtn"
         class="btn btn-sm btn-outline-secondary"
         onclick="toggleTheme()"
         style="font-size: 0.9rem; line-height: 1;">
     ☾
+<button id="floatingTodayBtn" onclick="goToToday()">
+    Today · <span id="todayDate">--/--</span>
 </button>
 </div>
     </div>
