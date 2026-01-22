@@ -560,6 +560,34 @@ body,
 .time-item.open .toggle-icon {
     transform: rotate(180deg);
 }
+#floatingTodayBtn {
+    position: fixed;
+    bottom: 18px;
+    right: 16px;
+    z-index: 999;
+
+    padding: 8px 14px;
+    border-radius: 999px;
+
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+
+    border: 1px solid #ddd;
+    background: white;
+    color: #333;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    transition: all 0.25s ease;
+}
+
+#floatingTodayBtn:hover {
+    transform: translateY(-2px);
+}
+[data-theme="dark"] #floatingTodayBtn {
+    background: #1f1f1f;
+    color: #eee;
+    border-color: #333;
+}
 </style>
 </head>
 <body>
@@ -595,6 +623,8 @@ body,
         onclick="toggleTheme()"
         style="font-size: 0.9rem; line-height: 1;">
     ☾
+<button id="floatingTodayBtn" onclick="goToToday()">
+    Today · <span id="todayDate">--/--</span>
 </button>
 </div>
     </div>
@@ -1392,6 +1422,57 @@ document.querySelectorAll('.time-header').forEach(header => {
         item.classList.toggle('open');
     });
 });
+// 🧭 點擊 Today → 跳到今天（以歐洲時間為準）
+function goToToday() {
+    const now = new Date();
+
+    const euDay = parseInt(
+        new Intl.DateTimeFormat('en-US', {
+            day: 'numeric',
+            timeZone: 'Europe/Berlin'
+        }).format(now)
+    );
+
+    const euMonth = parseInt(
+        new Intl.DateTimeFormat('en-US', {
+            month: 'numeric',
+            timeZone: 'Europe/Berlin'
+        }).format(now)
+    );
+
+    // 只處理 9 月
+    if (euMonth !== 9) return;
+
+    const dayId = `9${euDay}`;
+
+    const targetTab = document.querySelector(
+        `.day-tab[onclick*="'${dayId}'"]`
+    );
+
+    if (!targetTab) return;
+
+    switchDay(dayId, targetTab);
+}
+// 🗓️ 顯示今天日期在按鈕上（歐洲時間）
+(function updateTodayLabel() {
+    const now = new Date();
+
+    const euMonth = new Intl.DateTimeFormat('en-US', {
+        month: 'numeric',
+        timeZone: 'Europe/Berlin'
+    }).format(now);
+
+    const euDay = new Intl.DateTimeFormat('en-US', {
+        day: 'numeric',
+        timeZone: 'Europe/Berlin'
+    }).format(now);
+
+    const label = document.getElementById('todayDate');
+    if (label) {
+        label.textContent = `${euMonth}/${euDay}`;
+    }
+})();
+
 </script>
 <div id="hotel-bar" class="accommodation-bar">
     <div>
