@@ -1472,15 +1472,25 @@ function jumpToToday() {
             switchTab('itinerary', itineraryNav);
         }
 
-        // 2. 找到對應日期的 Tab 並觸發點擊
+// 2. 找到對應日期的 Tab
         const targetTab = document.querySelector(`.day-tab[onclick*="'${dayId}'"]`);
+        
         if (targetTab) {
-            targetTab.click(); // 直接模擬點擊，觸發所有原有邏輯（含 refreshHotelBar）
+            // A. 觸發內容切換
+            targetTab.click(); 
+            
+            // B. 同步捲動上方導覽列：讓目標 Tab 滾動到容器的最左側
+            targetTab.scrollIntoView({
+                behavior: 'smooth', // 平滑捲動
+                inline: 'start',    // 對齊到起始位置 (最左側)
+                block: 'nearest'    // 垂直方向保持不動
+            });
+
+            // C. 視覺回饋：滾動頁面到頂部
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 }
-
 // 頁面加載後自動顯示日期文字
 document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
