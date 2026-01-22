@@ -560,6 +560,44 @@ body,
 .time-item.open .toggle-icon {
     transform: rotate(180deg);
 }
+/* 📍 左上角「今日」按鈕 - 獨立樣式 */
+.today-toggle {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1000; /* 確保在最上層 */
+}
+
+#todayBtn {
+    width: 42px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+    border-radius: 30%;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: #ffffff;
+    color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: transform 0.1s ease;
+    cursor: pointer;
+    line-height: 1;
+}
+
+[data-theme="dark"] #todayBtn {
+    background: #2c2c2c;
+    border-color: #444;
+    color: #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+#todayBtn:active {
+    transform: scale(0.9);
+}
 </style>
 </head>
 <body>
@@ -595,7 +633,14 @@ body,
         onclick="toggleTheme()"
         style="font-size: 0.9rem; line-height: 1;">
     ☾
+</div>
+<div class="today-toggle">
+    <button id="todayBtn" onclick="jumpToToday()" title="跳轉至今日行程">
+    <span id="todayDate">--/--</span>
+    </button>
+</div>
 </button>
+
 </div>
     </div>
 </div>
@@ -1391,6 +1436,58 @@ document.querySelectorAll('.time-header').forEach(header => {
         const item = header.closest('.time-item');
         item.classList.toggle('open');
     });
+});
+// 🗓️ 顯示今天日期在按鈕上（歐洲時間）
+(function updateTodayLabel() {
+    const now = new Date();
+
+    const euMonth = new Intl.DateTimeFormat('en-US', {
+        month: 'numeric',
+        timeZone: 'Europe/Berlin'
+    }).format(now);
+
+    const euDay = new Intl.DateTimeFormat('en-US', {
+        day: 'numeric',
+        timeZone: 'Europe/Berlin'
+    }).format(now);
+
+    const label = document.getElementById('todayDate');
+    if (label) {
+        label.textContent = `${euMonth}/${euDay}`;
+    }
+})();
+function jumpToToday() {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const y = now.getFullYear();
+
+    // 判斷是否在 2026 年 9 月 10 日至 28 日之間
+    if (y === 2026 && m === 9 && d >= 10 && d <= 28) {
+        const dayId = '9' + d; // 生成 ID 如 910, 911...
+        
+        // 1. 強制切換回「行程」大分頁
+        const itineraryNav = document.querySelector('.nav-item[onclick*="itinerary"]');
+        if (typeof switchTab === 'function') {
+            switchTab('itinerary', itineraryNav);
+        }
+
+        // 2. 找到對應日期的 Tab 並觸發點擊
+        const targetTab = document.querySelector(`.day-tab[onclick*="'${dayId}'"]`);
+        if (targetTab) {
+            targetTab.click(); // 直接模擬點擊，觸發所有原有邏輯（含 refreshHotelBar）
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+}
+
+// 頁面加載後自動顯示日期文字
+document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    const todayBtn = document.getElementById('todayBtn');
+    if (now.getMonth() + 1 === 9) {
+        todayBtn.innerText = `9/${now.getDate()}`;
+    }
 });
 </script>
 <div id="hotel-bar" class="accommodation-bar">
