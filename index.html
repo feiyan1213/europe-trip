@@ -1015,11 +1015,14 @@ body,
     <div class="nav-item" onclick="switchTab('favorites', this)"><i class="fas fa-heart"></i>收藏</div>
     </nav>
 <div id="favorites" class="content-section">
-    <!-- 🔧 測試用按鈕 -->
-    <button class="btn btn-sm btn-outline-primary mb-2"
-            onclick="addTestFavorite()">
-        ＋ 新增測試收藏
-    </button>
+<div id="fav-top-container" class="mb-3">
+    <h5>🔖 臨時決策標記</h5>
+    <div id="fav-top-list"></div>
+</div>
+
+<div id="fav-list-container"></div>
+
+<button class="btn btn-sm btn-primary mt-2" onclick="addFavoritePrompt()">➕ 新增大標題收藏</button>
 
     <div id="fav-list-container"></div>
 </div>
@@ -1285,47 +1288,51 @@ function initializePage() {
     if (typeof renderPackList === "function") renderPackList();
 }
 
-// 2. 修正後的匯入函數
+// 🔄 匯入同步代碼
 function importData() {
     const code = prompt("請貼上朋友傳給你的同步代碼：");
     if (!code) return;
 
     try {
         const decoded = JSON.parse(decodeURIComponent(atob(code)));
-        
-        // 寫入儲存空間
-        if (decoded.expenses) localStorage.setItem('trip_v2026', decoded.expenses);
-        if (decoded.packing) localStorage.setItem('trip_pack_cat', decoded.packing);
-        
+
+        // 覆蓋 localStorage
+        if (decoded.favorites) localStorage.setItem('trip_favorites', JSON.stringify(decoded.favorites));
+        if (decoded.packing) localStorage.setItem('trip_pack_cat', JSON.stringify(decoded.packing));
+        if (decoded.expenses) localStorage.setItem('trip_v2026', JSON.stringify(decoded.expenses));
+
         alert('🚀 同步成功！即將更新畫面。');
-        
-        // 關鍵：先刷新數據再重新整理
-        location.reload(); 
+
+        // 刷新畫面，重新渲染收藏清單
+        favorites = decoded.favorites || [];
+        renderFavorites();
+        // 這裡可依需要呼叫 renderPacking()、renderExpenses() 等刷新畫面函數
     } catch (e) {
         console.error(e);
-        alert('❌ 代碼無效，請確保複製完整。');
+        alert('❌ 代碼無效，請確保完整複製。');
     }
 }
 
-// 3. 確保匯出按鈕正常的函數 (補強版)
+// 🔄 匯出同步代碼
 function exportData() {
     try {
         const data = {
-            expenses: localStorage.getItem('trip_v2026'),
-            packing: localStorage.getItem('trip_pack_cat')
+            favorites: JSON.parse(localStorage.getItem('trip_favorites')) || [],
+            packing: JSON.parse(localStorage.getItem('trip_pack_cat')) || [],
+            expenses: JSON.parse(localStorage.getItem('trip_v2026')) || []
         };
-        
-        if (!data.expenses && !data.packing) {
-            alert('目前還沒有數據可以匯出喔！');
+
+        if (!data.favorites.length && !data.packing.length && !data.expenses.length) {
+            alert('目前沒有資料可匯出喔！');
             return;
         }
 
         const code = btoa(encodeURIComponent(JSON.stringify(data)));
-        
+
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(code).then(() => {
-                alert('✅ 成功！同步代碼已複製。\n請傳送給朋友貼上。');
-            }).catch(err => fallbackCopy(code));
+                alert('✅ 同步代碼已複製，請傳送給朋友貼上。');
+            }).catch(() => fallbackCopy(code));
         } else {
             fallbackCopy(code);
         }
@@ -1334,68 +1341,266 @@ function exportData() {
     }
 }
 // --- 收藏清單 ---
-
 let favorites = JSON.parse(localStorage.getItem('trip_favorites')) || [];
 
-// 建立收藏物件
-function createFavorite({ title, day = "", category = "備案" }) {
+// --- 建立收藏物件 ---
+function createFavorite({ title, category = "備案" }) {
     return {
         id: Date.now(),
         title,
-        day,
         category,
         note: "",
+        items: [], // 地點清單
         createdAt: new Date().toISOString()
     };
 }
 
-// 渲染收藏列表
+// --- 建立地點物件 ---
+function createItem({ name, links = [], note = "" }) {
+    return {
+        id: Date.now(),
+        name,
+        links,
+        note,
+        tempMark: false // 🔖 臨時決策標記
+    };
+}
+
+// --- 儲存到 localStorage ---
+function saveFavorites() {
+    localStorage.setItem('trip_favorites', JSON.stringify(favorites));
+}
+
+// --- 渲染頂部臨時標記區 ---
+function renderTopMarked() {
+    const topContainer = document.getElementById('fav-top-list');
+    topContainer.innerHTML = '';
+    favorites.forEach(fav => {
+        fav.items.filter(i => i.tempMark).forEach(item => {
+            const div = document.createElement('div');
+            div.className = "card-custom mb-1 p-2 bg-warning";
+            div.innerText = `${fav.title} → ${item.name}`;
+            topContainer.appendChild(div);
+        });
+    });
+}
+
+// --- 渲染頂部臨時標記區 ---
+function renderTopMarked() {
+    const topContainer = document.getElementById('fav-top-list');
+    topContainer.innerHTML = '';
+    favorites.forEach(fav => {
+        fav.items.filter(i => i.tempMark).forEach(item => {
+            const div = document.createElement('div');
+            div.className = "card-custom mb-1 p-2 bg-warning d-flex justify-content-between align-items-center";
+
+            const textSpan = document.createElement('span');
+            textSpan.innerText = `${fav.title} → ${item.name}`;
+            div.appendChild(textSpan);
+
+            // 🔖 取消標記按鈕
+            const markBtn = document.createElement('button');
+            markBtn.className = "btn btn-sm btn-warning ms-2";
+            markBtn.innerText = "取消標記";
+            markBtn.onclick = () => {
+                item.tempMark = false;
+                saveFavorites();
+                renderFavorites();
+                renderTopMarked();
+            };
+            div.appendChild(markBtn);
+
+            topContainer.appendChild(div);
+        });
+    });
+}
+
+// --- 渲染收藏列表 ---
 function renderFavorites() {
     const container = document.getElementById('fav-list-container');
-    if (!container) return;
-
     container.innerHTML = '';
 
-    if (favorites.length === 0) {
-        container.innerHTML =
-            `<div class="text-center small text-muted py-3">尚無收藏項目</div>`;
+    if(favorites.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-3">尚無收藏項目</div>`;
         return;
     }
-favorites.forEach(f => {
-    container.innerHTML += `
-        <div class="card-custom mb-2 d-flex justify-content-between align-items-center">
-            <span>${f.title}</span>
 
-            <button class="btn btn-sm btn-outline-danger"
-                    onclick="removeFavorite(${f.id})"
-                    title="刪除收藏">
-                🗑️
-            </button>
-        </div>
-    `;
-});
-}
+    favorites.forEach(fav => {
+        const card = document.createElement('div');
+        card.className = "card-custom mb-2 p-2 border";
 
-// 🔧 測試用：新增收藏
-function addTestFavorite() {
-    const fav = createFavorite({
-        title: "測試收藏景點"
+        // 大標題 + 展開按鈕
+        const header = document.createElement('div');
+        header.className = "d-flex justify-content-between align-items-center";
+        const titleSpan = document.createElement('span');
+        titleSpan.innerText = `${fav.title} [${fav.category}]`;
+        header.appendChild(titleSpan);
+
+        const btnGroup = document.createElement('div');
+
+        // 刪除收藏
+        const delBtn = document.createElement('button');
+        delBtn.className = "btn btn-sm btn-outline-danger";
+        delBtn.innerText = "🗑️";
+        delBtn.onclick = () => { removeFavorite(fav.id); };
+
+        // 編輯大標題
+        const editBtn = document.createElement('button');
+        editBtn.className = "btn btn-sm btn-outline-secondary me-1";
+        editBtn.innerText = "✏️";
+        editBtn.onclick = () => {
+            const newTitle = prompt("編輯標題", fav.title);
+            const newCategory = prompt("編輯分類", fav.category);
+            if(newTitle) fav.title = newTitle;
+            if(newCategory) fav.category = newCategory;
+            saveFavorites();
+            renderFavorites();
+        };
+
+        btnGroup.appendChild(editBtn);
+        btnGroup.appendChild(delBtn);
+
+        // 展開/收合
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = "btn btn-sm btn-outline-secondary ms-1";
+        toggleBtn.innerText = "🔽";
+        btnGroup.appendChild(toggleBtn);
+
+        header.appendChild(btnGroup);
+        card.appendChild(header);
+
+        // 地點清單區
+        const itemList = document.createElement('div');
+        itemList.className = "mt-2";
+        itemList.style.display = "none"; // 初始收合
+        fav.items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = "border p-1 mb-1 position-relative";
+
+            // ❌ 刪除細項按鈕
+            const removeItemBtn = document.createElement('button');
+            removeItemBtn.className = "btn btn-sm btn-danger position-absolute";
+            removeItemBtn.style.top = "5px";
+            removeItemBtn.style.right = "5px";
+            removeItemBtn.innerText = "❌";
+            removeItemBtn.onclick = () => {
+                fav.items = fav.items.filter(i => i.id !== item.id);
+                saveFavorites();
+                renderFavorites();
+            };
+            // 編輯細項
+            const editItemBtn = document.createElement('button');
+            editItemBtn.className = "btn btn-sm btn-secondary position-absolute";
+            editItemBtn.style.top = "5px";
+            editItemBtn.style.right = "40px"; // 放在刪除前方
+            editItemBtn.innerText = "✏️";
+            editItemBtn.onclick = () => {
+                const newName = prompt("編輯地點名稱", item.name);
+                const newLinks = prompt("編輯連結（用 | 分隔）", item.links.join(" | "));
+                const newNote = prompt("編輯備註", item.note);
+                if(newName) item.name = newName;
+                if(newLinks) item.links = newLinks.split("|").map(l => l.trim());
+                if(newNote !== null) item.note = newNote; // 允許清空
+                saveFavorites();
+                renderFavorites();
+            };
+
+            itemDiv.appendChild(editItemBtn);
+            itemDiv.appendChild(removeItemBtn);
+            // 地點名稱
+            const nameSpan = document.createElement('span');
+            nameSpan.innerText = item.name;
+            itemDiv.appendChild(nameSpan);
+
+            // 連結
+            if(item.links.length > 0) {
+                const linkText = document.createElement('div');
+                linkText.className = "small";
+                linkText.innerHTML = item.links.map(l => `<a href="${l}" target="_blank">${l}</a>`).join(" | ");
+                itemDiv.appendChild(linkText);
+            }
+
+            // 備註
+            if(item.note) {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = "small text-muted";
+                noteDiv.innerText = item.note;
+                itemDiv.appendChild(noteDiv);
+            }
+
+            // 🔖 臨時標記按鈕
+            const markBtn = document.createElement('button');
+            markBtn.className = "btn btn-sm btn-warning mt-1";
+            markBtn.innerText = item.tempMark ? "取消標記" : "🔖 標記";
+            markBtn.onclick = () => {
+                item.tempMark = !item.tempMark;
+                saveFavorites();
+                renderFavorites();
+                renderTopMarked();
+            };
+            itemDiv.appendChild(markBtn);
+
+            itemList.appendChild(itemDiv);
+        });
+
+        // 新增地點按鈕
+        const addItemBtn = document.createElement('button');
+        addItemBtn.className = "btn btn-sm btn-primary mt-1";
+        addItemBtn.innerText = "➕ 新增地點";
+        addItemBtn.onclick = () => addItemPrompt(fav.id);
+        itemList.appendChild(addItemBtn);
+
+        card.appendChild(itemList);
+
+        // 切換展開/收合
+        toggleBtn.onclick = () => {
+            itemList.style.display = itemList.style.display === "none" ? "block" : "none";
+        };
+
+        container.appendChild(card);
     });
 
-    favorites.push(fav);
-    localStorage.setItem('trip_favorites', JSON.stringify(favorites));
-    console.log('已加入收藏', favorites);
+    renderTopMarked();
+}
+// --- 新增大標題收藏 ---
+function addFavoritePrompt() {
+    const title = prompt("輸入收藏大標題");
+    if(!title) return;
+    const category = prompt("分類標籤(可空白, 例如雨備)") || "備案";
 
+    const fav = createFavorite({ title, category });
+    favorites.push(fav);
+    saveFavorites();
     renderFavorites();
 }
+
+// --- 新增地點 ---
+function addItemPrompt(favId) {
+    const fav = favorites.find(f => f.id === favId);
+    if(!fav) return;
+
+    const name = prompt("地點名稱 (必填)");
+    if(!name) return;
+
+    const linksRaw = prompt("連結 (可空白，多個用逗號分隔)") || "";
+    const links = linksRaw.split(",").map(s => s.trim()).filter(s => s);
+
+    const note = prompt("備註 (可空白)") || "";
+
+    const item = createItem({ name, links, note });
+    fav.items.push(item);
+    saveFavorites();
+    renderFavorites();
+}
+
+// --- 刪除收藏 ---
 function removeFavorite(id) {
     favorites = favorites.filter(f => f.id !== id);
-    localStorage.setItem('trip_favorites', JSON.stringify(favorites));
+    saveFavorites();
     renderFavorites();
 }
 
-
-// 初始渲染
+// --- 初始渲染 ---
 renderFavorites();
 // 4. 只有一個 onload，確保所有事情都在這裡發生
 window.onload = function() {
