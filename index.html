@@ -1469,9 +1469,9 @@ document.querySelectorAll('.time-header').forEach(header => {
 })();
 function jumpToToday() {
     const now = new Date();
-    const m = 9;
-    const d = 23;
-    const y = 2026;
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const y = now.getFullYear();
 
     // 判斷是否在 2026 年 9 月 10 日至 28 日之間
     if (y === 2026 && m === 9 && d >= 10 && d <= 28) {
