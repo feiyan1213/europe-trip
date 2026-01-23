@@ -560,45 +560,59 @@ body,
 .time-item.open .toggle-icon {
     transform: rotate(180deg);
 }
-/* 📍 左上角「今日」按鈕 - 獨立樣式 */
-.today-toggle {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 1000; /* 確保在最上層 */
-}
-
-#todayBtn {
-    width: 42px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    border-radius: 30%;
-    border: 1px solid rgba(0,0,0,0.08);
-    background: #ffffff;
-    color: var(--accent);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    transition: transform 0.1s ease;
-    cursor: pointer;
-    line-height: 1.1;
-}
-
-[data-theme="dark"] #todayBtn {
-    background: #2c2c2c;
-    border-color: #444;
-    color: #eee;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
-
 #todayBtn:active {
     transform: scale(0.9);
+}
+.time-capsule {
+    background: #f8f9fa;
+    border-radius: 999px;
+    max-width: 300px;
+    margin: 0 auto;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.time-capsule:hover {
+    background: #f1f3f5;
+}
+
+.time-capsule:active {
+    transform: scale(0.98);
+}
+
+.time-capsule .divider {
+    height: 16px;
+    width: 1px;
+    background: #ddd;
+}
+
+.today-label {
+    position: absolute;
+    bottom: -4px;
+    right: 14px;
+    font-size: 0.55rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.06);
+    color: #666;
+    white-space: nowrap;
+}
+[data-theme="dark"] .time-capsule {
+    background: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .time-capsule:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+[data-theme="dark"] .time-capsule .divider {
+    background: rgba(255,255,255,0.25);
+}
+
+[data-theme="dark"] .today-label {
+    background: rgba(255,255,255,0.15);
+    color: #ccc;
 }
 </style>
 </head>
@@ -616,30 +630,43 @@ body,
     Germany • Norway Cruise • Switzerland • Italy
 </small>
         
-        <div class="d-flex justify-content-center align-items-center gap-3 py-1" style="background: #f8f9fa; border-radius: 20px; font-family: monospace; max-width: 280px; margin: 0 auto;">
-            <div class="text-end" style="min-width: 100px;">
-                <span id="tw-date-label" style="font-size: 0.5rem; color: #dc3545; vertical-align: middle;"></span>
-                <span id="tw-time" style="font-size: 0.9rem; font-weight: bold; color: #999;">--:--</span>
-                <small style="font-size: 0.5rem; color: #999; display: block; margin-top: -4px;">TAIWAN</small>
-            </div>
-            <div style="height: 15px; width: 1px; background: #ddd;"></div>
-            <div class="text-start" style="min-width: 100px;">
-                <span id="eu-time" style="font-size: 0.9rem; font-weight: bold; color: #2C3E50;">--:--</span>
-                <span id="eu-date-label" style="font-size: 0.5rem; color: #198754; vertical-align: middle;"></span>
-                <small style="font-size: 0.5rem; color: #2C3E50; display: block; margin-top: -4px;">EUROPE</small>
-            </div>
-        </div>
+<div id="timeCapsule"
+     class="time-capsule d-flex justify-content-center align-items-center gap-3 py-1"
+     onclick="goToToday()">
+
+    <div class="text-end" style="min-width: 90px;">
+        <span id="tw-time"
+              style="font-size: 0.9rem; font-weight: bold; color: #999;">
+            --:--
+        </span>
+        <small style="font-size: 0.5rem; color: #999; display: block;">
+            TAIWAN
+        </small>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="text-start" style="min-width: 90px;">
+        <span id="eu-time"
+              style="font-size: 0.9rem; font-weight: bold; color: #2C3E50;">
+            --:--
+        </span>
+        <small style="font-size: 0.5rem; color: #2C3E50; display: block;">
+            EUROPE
+        </small>
+    </div>
+
+    <!-- ✅ 永遠顯示的 Today 日期 -->
+    <div class="today-label">
+        Today · <span id="todayDate">--/--</span>
+    </div>
+</div>
 <div class="theme-toggle">
 <button id="themeBtn"
         class="btn btn-sm btn-outline-secondary"
         onclick="toggleTheme()"
         style="font-size: 0.9rem; line-height: 1;">
     ☾
-</div>
-<div class="today-toggle">
-    <button id="todayBtn" onclick="jumpToToday()" title="跳轉至今日行程">
-    <span id="todayDate">--/--</span>
-    </button>
 </div>
 </button>
 
