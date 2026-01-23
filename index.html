@@ -637,7 +637,7 @@ body,
     </div>
 
     <!-- Today 按鈕固定在右下角 -->
-    <button id="todayBtn" onclick="jumpToToday()"
+    <button id="todayBtn" onclick="jumpToToday()" title="跳轉至今日行程"
             style="position: absolute; right: -10px; bottom: -5px;">
         Today · <span id="todayDate">--/--</span>
     </button>
@@ -1012,8 +1012,18 @@ body,
     <div class="nav-item" onclick="switchTab('info', this)"><i class="fas fa-info-circle"></i>資訊</div>
     <div class="nav-item" onclick="switchTab('budget', this)"><i class="fas fa-wallet"></i>記帳</div>
     <div class="nav-item" onclick="switchTab('packing', this)"><i class="fas fa-check-square"></i>行李</div>
+    <div class="nav-item" onclick="switchTab('favorites', this)"><i class="fas fa-heart"></i>收藏</div>
     </nav>
+<div id="favorites" class="content-section">
+    <!-- 🔧 測試用按鈕 -->
+    <button class="btn btn-sm btn-outline-primary mb-2"
+            onclick="addTestFavorite()">
+        ＋ 新增測試收藏
+    </button>
 
+    <div id="fav-list-container"></div>
+</div>
+</div>
 <script>
 function updateClocks() {
     const now = new Date();
@@ -1323,7 +1333,70 @@ function exportData() {
         alert("匯出失敗：" + err);
     }
 }
+// --- 收藏清單 ---
 
+let favorites = JSON.parse(localStorage.getItem('trip_favorites')) || [];
+
+// 建立收藏物件
+function createFavorite({ title, day = "", category = "備案" }) {
+    return {
+        id: Date.now(),
+        title,
+        day,
+        category,
+        note: "",
+        createdAt: new Date().toISOString()
+    };
+}
+
+// 渲染收藏列表
+function renderFavorites() {
+    const container = document.getElementById('fav-list-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (favorites.length === 0) {
+        container.innerHTML =
+            `<div class="text-center small text-muted py-3">尚無收藏項目</div>`;
+        return;
+    }
+favorites.forEach(f => {
+    container.innerHTML += `
+        <div class="card-custom mb-2 d-flex justify-content-between align-items-center">
+            <span>${f.title}</span>
+
+            <button class="btn btn-sm btn-outline-danger"
+                    onclick="removeFavorite(${f.id})"
+                    title="刪除收藏">
+                🗑️
+            </button>
+        </div>
+    `;
+});
+}
+
+// 🔧 測試用：新增收藏
+function addTestFavorite() {
+    const fav = createFavorite({
+        title: "測試收藏景點"
+    });
+
+    favorites.push(fav);
+    localStorage.setItem('trip_favorites', JSON.stringify(favorites));
+    console.log('已加入收藏', favorites);
+
+    renderFavorites();
+}
+function removeFavorite(id) {
+    favorites = favorites.filter(f => f.id !== id);
+    localStorage.setItem('trip_favorites', JSON.stringify(favorites));
+    renderFavorites();
+}
+
+
+// 初始渲染
+renderFavorites();
 // 4. 只有一個 onload，確保所有事情都在這裡發生
 window.onload = function() {
     const savedTheme = localStorage.getItem('trip_theme');
@@ -1522,4 +1595,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 </body>
 </html>
-
