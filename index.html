@@ -266,7 +266,7 @@
     color: #D4A373 !important; /* <--- 您可以把 #D4A373 改成任何您想要的淺色或金棕色 */
 }
 [data-theme="dark"] {
-    --jp-wash: #121212;
+    --jp-wash: #121212 !important;
     --accent: #EAEAEA;
     --highlight: #D4A373;
 }
@@ -276,22 +276,20 @@
 }
 
 [data-theme="dark"] .card-custom,
-[data-theme="dark"] .bottom-nav,
-[data-theme="dark"] .day-nav-container {
-    background: #1e1e1e;
-    color: #ddd;
-[data-theme="dark"] .card-custom {
-    background: #1e1e1e;
-    color: #ddd;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+[data-theme="dark"] .accommodation-bar,
+[data-theme="dark"] .sync-card,
+[data-theme="dark"] .list-group-item {
+    background-color: #1e1e1e !important;
+    border: 1px solid #2a2a2a !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 }
 
 /* 修正導覽列與標題 */
 [data-theme="dark"] .bottom-nav,
 [data-theme="dark"] .day-nav-container {
-    background: #1a1a1a;
-    border-top-color: #333;
-    border-bottom-color: #333;
+    background: #1a1a1a !important;
+    border-bottom: 1px solid #2a2a2a !important;
+    box-shadow: none !important;
 }
 
 /* 修正文字顏色 */
@@ -393,10 +391,11 @@ body,
 /* 🌙 Header 夜間背景 */
 [data-theme="dark"] .sticky-top {
     background-color: #121212 !important;
-    border-bottom-color: #2a2a2a;
+    border-bottom: 1px solid #2a2a2a !important; /* 將原本可能的白線改為極深灰 */
+    box-shadow: none !important;
 }
 [data-theme="dark"] .sticky-top .p-3 {
-    background-color: #121212;
+    background-color: #121212 !important;
 }
 /* 🌙 夜間模式－時鐘顏色 */
 [data-theme="dark"] #tw-time {
@@ -601,6 +600,27 @@ body,
 #todayBtn:active {
     transform: scale(0.9);
 }
+/* --- 強制修正：消除夜間模式連接處亮線與陰影 --- */
+
+/* 1. 頂部標題列與下方內容連接處 */
+
+/* 2. 橫向日期導覽列 (Day Nav) */
+
+/* 3. 底部頁籤 (Bottom Nav) 與上方內容連接處 */
+[data-theme="dark"] .bottom-nav {
+    background: #1a1a1a !important;
+    border-top: 1px solid #2a2a2a !important; /* 消除底部上方的亮線 */
+    box-shadow: 0 -1px 10px rgba(0,0,0,0.5) !important; /* 改為深色陰影 */
+}
+
+/* 4. 卡片元件 (Card) 的邊框與連接處 */
+
+/* 5. 行李清單與其他連接處線條 */
+[data-theme="dark"] .pack-item {
+    border-bottom: 1px solid #2a2a2a !important;
+}
+
+/* 6. 修正 body 確保背景顏色一致，避免滑動時邊緣露白 */
 </style>
 </head>
 <body>
