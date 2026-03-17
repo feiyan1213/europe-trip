@@ -417,6 +417,12 @@ html[data-theme="dark"] .day-content .text-primary{ color:var(--text-1) !importa
   padding-left:32px;
   padding-top:12px;
   padding-bottom:24px;
+
+  opacity:1;
+  transform:none;
+}
+
+body.day-switch .time-item{
   opacity:0;
   transform:translateY(6px);
   animation:timelineFade .6s ease forwards;
@@ -448,13 +454,13 @@ html[data-theme="dark"] .day-content .text-primary{ color:var(--text-1) !importa
 
   /* 這圈是「切開線」用的，建議跟卡片表面一致 */
   border:2px solid var(--surface);
-
+  animation-delay:inherit;
+}
+.time-node{
   transform:scale(.6);
   opacity:0;
   animation:nodePop .4s ease forwards;
-  animation-delay:inherit;
 }
-
 @keyframes timelineFade{ to{ opacity:1; transform:translateY(0) } }
 @keyframes nodePop{ to{ opacity:1; transform:scale(1) } }
 
@@ -2557,6 +2563,113 @@ h6 input{
 #detailBlocks > div{
   transition:all .15s ease;
 }
+.section-title{
+outline:none;
+}
+
+body.edit-mode .section-title{
+border-bottom:1px dashed var(--border);
+}
+
+body:not(.edit-mode) .section-title{
+pointer-events:none;
+}
+.section-header{
+  display:grid;
+  grid-template-columns: 1fr 28px 28px; /* ⭐ 固定 */
+  align-items:center;
+}
+.section-add,
+.section-delete{
+  opacity:0;
+  transform: translateX(8px);
+
+  transition: 
+    opacity .2s ease,
+    transform .2s ease;
+
+background:none;
+border:none;
+
+cursor:pointer;
+  width:28px;
+  height:28px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:0;          /* ⭐ 清掉預設 padding */
+}
+
+body:not(.edit-mode){
+--section-icon:0px;
+}
+
+body.edit-mode{
+--section-icon:28px;
+}
+body.edit-mode .section-add,
+body.edit-mode .section-delete{
+  opacity:1;
+  transform: translateX(0);
+}
+.item-row{
+display:grid;
+grid-template-columns: var(--item-gap) 1fr var(--item-icon) var(--item-icon);
+align-items:center;
+transition: all .25s ease;
+}
+
+.item-handle{
+opacity:0;
+cursor:grab;
+text-align:center;
+transition: opacity .2s ease;
+}
+
+.item-edit,
+.item-delete{
+opacity:0;
+background:none;
+border:none;
+cursor:pointer;
+transition: opacity .2s ease;
+}
+
+body:not(.edit-mode){
+--item-gap:0px;
+--item-icon:0px;
+}
+
+body.edit-mode{
+--item-gap:32px;
+--item-icon:28px;
+}
+
+body.edit-mode .item-handle,
+body.edit-mode .item-edit,
+body.edit-mode .item-delete{
+opacity:1;
+}
+
+.item-content{
+display:flex;
+align-items:center;
+gap:6px;
+}
+.item-edit,
+.item-delete,
+.item-handle{
+transition: opacity .2s ease;
+}
+.time-text{
+  cursor:pointer;
+}
+
+body.edit-mode .time-text{
+  border-bottom:1px dashed var(--border);
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
@@ -3154,13 +3267,25 @@ function switchTab(id, el) {
 }
 
 function switchDay(dayId, el) {
+
+    // ⭐ 加這行：啟動 timeline 動畫
+    document.body.classList.add("day-switch");
+
     const container = el.parentElement;
     container.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
+
     document.querySelectorAll('.day-content').forEach(c => c.classList.remove('active'));
+
     const target = document.getElementById('day-' + dayId);
     if (target) target.classList.add('active');
+
     window.scrollTo(0, 0);
+
+    // ⭐ 動畫結束後移除
+    setTimeout(()=>{
+        document.body.classList.remove("day-switch");
+    }, 600); // 要跟你的 timelineFade 時間一致
 }
 // --- 記帳邏輯（新版：每筆鎖匯率 / 今日+分日 / 展開狀態保留） ---
 let expenses = JSON.parse(localStorage.getItem('trip_v2026')) || [];
@@ -6550,36 +6675,40 @@ let draggingItemId = null;
 let editingItemId = null;
 function toggleTimelineEdit(){
 
-timelineEditMode = !timelineEditMode
+    timelineEditMode = !timelineEditMode;
 
-document.body.classList.toggle("edit-mode",timelineEditMode)
+    document.body.classList.toggle("edit-mode",timelineEditMode);
 
-renderTimeline()
+    // ⭐ 確保 edit mode 不會觸發 day-switch 動畫
+    document.body.classList.remove("day-switch");
+
+setTimeout(()=>{
+        renderTimeline();
+    }, 50)
 }
 function renderSection(section,dayIndex,sectionIndex){
 let html = `
 
 <div class="card-custom mb-4">
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="section-header">
 
-<h6 class="fw-bold text-primary m-0">
-
-${timelineEditMode
-? `<input value="${section.title}"
-onchange="renameSection(${dayIndex},${sectionIndex},this.value)"
-style="width:140px">`
-: section.title}
-
+<h6 class="fw-bold text-primary m-0 section-title"
+contenteditable="${timelineEditMode}"
+data-day="${dayIndex}"
+data-section="${sectionIndex}">
+${section.title}
 </h6>
 
-${timelineEditMode
-? `<div>
+<button class="section-add"
+onclick="addItem(${dayIndex},${sectionIndex})">
+＋
+</button>
 
-<button onclick="deleteSection(${dayIndex},${sectionIndex})">🗑</button>
-
-</div>`
-: ""}
+<button class="section-delete"
+onclick="deleteSection(${dayIndex},${sectionIndex})">
+🗑
+</button>
 
 </div>
 <div class="section-items" id="section-${dayIndex}-${sectionIndex}">
@@ -6588,15 +6717,6 @@ section.items.forEach(item=>{
 html += renderItem(item)
 })
 html += `</div>`
-if(timelineEditMode){
-
-html += `
-<div style="margin-top:8px;">
-<button onclick="addItem(${dayIndex},${sectionIndex})">＋ Add Item</button>
-</div>
-`
-
-}
 
 html += `</div>`
 
@@ -6649,7 +6769,28 @@ dayContainer.innerHTML += `
 initItemDrag()
 
 }
+document.addEventListener("blur", e => {
 
+  // section title
+  if(e.target.classList.contains("section-title")){
+    const day = e.target.dataset.day
+    const section = e.target.dataset.section
+    const value = e.target.textContent.trim()
+
+    renameSection(day, section, value)
+    return
+  }
+
+  // ⭐ item title（新增這段）
+  if(e.target.classList.contains("title-text")){
+    const id = e.target.dataset.id
+    const value = e.target.textContent.trim()
+
+    updateItemTitle(id, value)
+    return
+  }
+
+}, true)
 function addItem(dayIndex,sectionIndex){
 
 const data = loadTripData()
@@ -6740,37 +6881,48 @@ localStorage.setItem("tripData",JSON.stringify(data))
 }
 function renderItem(item){
 
-let headerContent = ""
-
-if(!timelineEditMode){
-
 headerContent = `
-<div class="fw-bold">
-${item.time ? item.time + " " : ""}${item.title}
-${item.note ? `<span class="toggle-icon">▾</span>` : ""}
-</div>
-`
 
-}else{
+<div class="item-row">
 
-headerContent = `
-<span class="drag-handle">☰</span>
+<div class="item-handle">☰</div>
 
-<input type="time" class="edit-time"
+<div class="item-content">
+
+<span class="time-text"
+data-id="${item.id}">
+${item.time || "--:--"}
+</span>
+
+<input type="time"
+class="time-picker"
+data-id="${item.id}"
 value="${item.time || ""}"
-onchange="updateItemTime('${item.id}',this.value)"
-style="width:60px">
+style="display:none">
 
-<input class="edit-title"
-value="${item.title || ""}"
-onchange="updateItemTitle('${item.id}',this.value)"
-style="width:160px">
+<span class="title-text"
+data-id="${item.id}"
+contenteditable="${timelineEditMode}">
+${item.title || ""}
+</span>
 
 ${item.note ? `<span class="toggle-icon">▾</span>` : ""}
-<button onclick="toggleItemEditor('${item.id}')">✎</button>
-<button onclick="if(confirm('刪除這個行程?')) deleteItem('${item.id}')">🗑</button>`
-}
 
+</div>
+
+<button class="item-edit"
+onclick="toggleItemEditor('${item.id}')">
+✏
+</button>
+
+<button class="item-delete"
+onclick="if(confirm('刪除這個行程?')) deleteItem('${item.id}')">
+🗑
+</button>
+
+</div>
+
+`
 return `
 
 <div class="time-item" data-id="${item.id}" ${item.detailKey ? `data-detail="${item.detailKey}"` : ""}>
@@ -6814,6 +6966,41 @@ onchange="toggleItemDetail('${item.id}',this.checked)">
 `
 
 }
+document.addEventListener("click", e => {
+
+  if(!e.target.classList.contains("time-text")) return
+  if(!timelineEditMode) return
+
+  const id = e.target.dataset.id
+
+  const picker = document.querySelector(`.time-picker[data-id="${id}"]`)
+  if(!picker) return
+
+  // ⭐ 開啟原生 time picker
+  if(picker.showPicker){
+    picker.showPicker()
+  }else{
+    picker.focus()
+    picker.click()
+  }
+
+})
+document.addEventListener("change", e => {
+
+  if(!e.target.classList.contains("time-picker")) return
+
+  const id = e.target.dataset.id
+  const value = e.target.value
+
+  updateItemTime(id, value)
+
+  // ⭐ 更新畫面文字（不用整頁 render）
+  const text = document.querySelector(`.time-text[data-id="${id}"]`)
+  if(text){
+    text.textContent = value || "--:--"
+  }
+
+})
 function updateItemNote(id,value){
 
 const data = loadTripData()
@@ -6961,7 +7148,7 @@ new Sortable(container,{
 
 group:"timeline-items",
 
-handle:".drag-handle",
+handle:".item-handle",
 
 animation:150,
 onStart:function(evt){
