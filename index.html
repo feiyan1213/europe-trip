@@ -6899,7 +6899,12 @@ ${item.time || "--:--"}
 class="time-picker"
 data-id="${item.id}"
 value="${item.time || ""}"
-style="display:none">
+style="
+position:absolute;
+opacity:0;
+pointer-events:none;
+height:0;
+">
 
 <span class="title-text"
 data-id="${item.id}"
