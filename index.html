@@ -472,6 +472,11 @@ body.day-switch .time-item{
   cursor:pointer;
   user-select:none;
 }
+
+.time-text,
+.title-text{
+  user-select:text; /* ⭐ 允許編輯 */
+}
 .toggle-icon{
   font-size:.9rem;
   color:var(--text-3);
@@ -2670,6 +2675,13 @@ transition: opacity .2s ease;
 
 body.edit-mode .time-text{
   border-bottom:1px dashed var(--border);
+}
+.time-picker{
+  position:absolute;
+  opacity:0;
+  pointer-events:auto;  /* ⭐ 原本是 none → 改這裡 */
+  width:1px;
+  height:1px;
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -6898,13 +6910,7 @@ ${item.time || "--:--"}
 <input type="time"
 class="time-picker"
 data-id="${item.id}"
-value="${item.time || ""}"
-style="
-position:absolute;
-opacity:0;
-pointer-events:none;
-height:0;
-">
+value="${item.time || ""}">
 
 <span class="title-text"
 data-id="${item.id}"
@@ -6974,15 +6980,16 @@ onchange="toggleItemDetail('${item.id}',this.checked)">
 }
 document.addEventListener("click", e => {
 
-  if(!e.target.classList.contains("time-text")) return
+  const timeText = e.target.closest(".time-text")
+  if(!timeText) return
   if(!timelineEditMode) return
 
-  const id = e.target.dataset.id
+  e.stopPropagation() // ⭐ 防止被 header 吃掉
 
+  const id = timeText.dataset.id
   const picker = document.querySelector(`.time-picker[data-id="${id}"]`)
   if(!picker) return
 
-  // ⭐ 開啟原生 time picker
   if(picker.showPicker){
     picker.showPicker()
   }else{
