@@ -7164,6 +7164,10 @@ group:"timeline-items",
 handle:".item-handle",
 
 animation:150,
+
+  forceFallback: true,          // ⭐ 強制用 fallback（關鍵）
+  fallbackOnBody: true,         // ⭐ 防止位置錯亂
+  fallbackTolerance: 3,         // ⭐ 手指容錯（避免誤觸）
 onStart:function(evt){
 
 draggingItemId = evt.item.dataset.id
