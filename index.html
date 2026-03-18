@@ -6104,6 +6104,9 @@ trip.details[currentDetailKey].sub = value
 localStorage.setItem("tripData",JSON.stringify(trip))
 
 }
+let blockSortable = null;
+let rowSortables = [];
+
 function renderEditorBlocks(){
 
 const trip = loadTripData()
@@ -6117,28 +6120,26 @@ container.innerHTML = blocks.map((block,i)=>{
 if(block.type === "info"){
 
 return `
-
 <div class="detail-block" style="margin-top:10px">
 
 <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-
 <span class="block-drag" style="cursor:grab">⋮⋮</span>
+
 <input
 value="${escapeHtml(block.title || "INFO")}"
 style="flex:1"
 onchange="updateBlockTitle(${i},this.value)">
 
 <button onclick="addBlockRow(${i})">＋</button>
-
 <button onclick="deleteBlock(${i})">🗑</button>
-
 </div>
 
+<div class="block-rows">
 ${block.items.map((item,j)=>`
-
 <div class="detail-row-editor" style="display:flex;gap:4px;margin-bottom:4px">
 
 <span class="row-drag" style="cursor:grab">⋮</span>
+
 <input
 value="${escapeHtml(item.label || "")}"
 placeholder="label"
@@ -6154,39 +6155,35 @@ onchange="updateBlockValue(${i},${j},this.value)">
 <button onclick="deleteBlockRow(${i},${j})">x</button>
 
 </div>
-
 `).join("")}
-
 </div>
 
-`
-
+</div>`
 }
+
 if(block.type === "list"){
 
 return `
-
 <div class="detail-block" style="margin-top:10px">
 
 <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-
 <span class="block-drag" style="cursor:grab">⋮⋮</span>
+
 <input
 value="${escapeHtml(block.title || "SECTION")}"
 style="flex:1"
 onchange="updateBlockTitle(${i},this.value)">
 
 <button onclick="addBlockRow(${i})">＋</button>
-
 <button onclick="deleteBlock(${i})">🗑</button>
-
 </div>
 
+<div class="block-rows">
 ${block.items.map((item,j)=>`
-
 <div class="detail-row-editor" style="display:flex;gap:4px;margin-bottom:4px">
 
 <span class="row-drag" style="cursor:grab">⋮</span>
+
 <input
 value="${escapeHtml(item.text || "")}"
 style="flex:1"
@@ -6195,39 +6192,35 @@ onchange="updateBlockText(${i},${j},this.value)">
 <button onclick="deleteBlockRow(${i},${j})">x</button>
 
 </div>
-
 `).join("")}
-
 </div>
 
-`
-
+</div>`
 }
+
 if(block.type === "links"){
 
 return `
-
 <div class="detail-block" style="margin-top:10px">
 
 <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-
 <span class="block-drag" style="cursor:grab">⋮⋮</span>
+
 <input
 value="${escapeHtml(block.title || "LINKS")}"
 style="flex:1"
 onchange="updateBlockTitle(${i},this.value)">
 
 <button onclick="addBlockRow(${i})">＋</button>
-
 <button onclick="deleteBlock(${i})">🗑</button>
-
 </div>
 
+<div class="block-rows">
 ${block.items.map((item,j)=>`
-
 <div class="detail-row-editor" style="display:flex;gap:4px;margin-bottom:4px">
 
 <span class="row-drag" style="cursor:grab">⋮</span>
+
 <input
 value="${escapeHtml(item.label || "")}"
 placeholder="name"
@@ -6243,64 +6236,72 @@ onchange="updateBlockValue(${i},${j},this.value)">
 <button onclick="deleteBlockRow(${i},${j})">x</button>
 
 </div>
-
 `).join("")}
-
 </div>
 
-`
-
+</div>`
 }
+
 return ""
 
 }).join("")
 
-new Sortable(container,{
-animation:150,
-handle:".block-drag",
-onEnd:(evt)=>{
-
-const trip = loadTripData()
-
-const moved =
-trip.details[currentDetailKey].blocks.splice(evt.oldIndex,1)[0]
-
-trip.details[currentDetailKey].blocks.splice(evt.newIndex,0,moved)
-
-localStorage.setItem("tripData",JSON.stringify(trip))
-
-renderEditorBlocks()
-
+// ===== block sortable =====
+if(blockSortable){
+  blockSortable.destroy();
 }
 
+blockSortable = new Sortable(container,{
+  animation:150,
+  handle:".block-drag",
+  draggable: ".detail-block",
+  forceFallback:true,
+  fallbackOnBody:true,
+
+  onEnd:(evt)=>{
+    const trip = loadTripData()
+
+    const moved =
+    trip.details[currentDetailKey].blocks.splice(evt.oldIndex,1)[0]
+
+    trip.details[currentDetailKey].blocks.splice(evt.newIndex,0,moved)
+
+    localStorage.setItem("tripData",JSON.stringify(trip))
+
+    renderEditorBlocks()
+  }
 })
-// ⭐ row drag
+
+// ===== row sortable =====
+rowSortables.forEach(s=>s.destroy());
+rowSortables = [];
+
 document.querySelectorAll(".detail-block").forEach((blockEl,blockIndex)=>{
 
-const rows = blockEl.querySelectorAll(".detail-row-editor")
+  const rowContainer = blockEl.querySelector(".block-rows")
+  if(!rowContainer) return
 
-if(!rows.length) return
+  const s = new Sortable(rowContainer,{
+    animation:150,
+    handle:".row-drag",
+    draggable:".detail-row-editor",
+    forceFallback:true,
 
-new Sortable(blockEl,{
-animation:150,
-handle:".row-drag",
-onEnd:(evt)=>{
+    onEnd:(evt)=>{
+      const trip = loadTripData()
 
-const trip = loadTripData()
+      const items = trip.details[currentDetailKey].blocks[blockIndex].items
 
-const items = trip.details[currentDetailKey].blocks[blockIndex].items
+      const moved = items.splice(evt.oldIndex,1)[0]
+      items.splice(evt.newIndex,0,moved)
 
-const moved = items.splice(evt.oldIndex,1)[0]
+      localStorage.setItem("tripData",JSON.stringify(trip))
+    }
+  })
 
-items.splice(evt.newIndex,0,moved)
-
-localStorage.setItem("tripData",JSON.stringify(trip))
-
-}
-
+  rowSortables.push(s)
 })
 
-})
 }
 function updateBlockLabel(blockIndex,itemIndex,value){
 
