@@ -2340,10 +2340,6 @@ padding-left:10px;
 color:#ddd;
 }
 
-.time-header{
-display:flex;
-align-items:center;
-}
 /* edit mode disable timeline animation */
 
 body.edit-mode .time-item{
@@ -2369,10 +2365,6 @@ body.edit-mode .time-node{
   border-radius:10px;
 }
 
-.time-item:hover{
-  background:var(--pill-bg);
-}
-
 
 /* ---------- Drag Handle ---------- */
 
@@ -2388,7 +2380,9 @@ body.edit-mode .time-node{
   background:var(--pill-bg);
   color:var(--text-2);
 }
-
+.drag-handle{
+  user-select:none;
+}
 .drag-handle:active{
   cursor:grabbing;
 }
@@ -2566,7 +2560,10 @@ h6 input{
 .time-item,
 .item-editor,
 #detailBlocks > div{
-  transition:all .15s ease;
+  transition:
+    background .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
 }
 .section-title{
 outline:none;
@@ -2620,12 +2617,11 @@ body.edit-mode .section-delete{
   transform: translateX(0);
 }
 .item-row{
-display:grid;
-grid-template-columns: var(--item-gap) 1fr var(--item-icon) var(--item-icon);
-align-items:center;
-transition: all .25s ease;
+  display:grid;
+  grid-template-columns: var(--item-gap) 1fr var(--item-icon) var(--item-icon);
+  align-items:center;
+  transition: opacity .2s ease;
 }
-
 .item-handle{
 opacity:0;
 cursor:grab;
@@ -7164,10 +7160,6 @@ group:"timeline-items",
 handle:".item-handle",
 
 animation:150,
-
-  forceFallback: true,          // ⭐ 強制用 fallback（關鍵）
-  fallbackOnBody: true,         // ⭐ 防止位置錯亂
-  fallbackTolerance: 3,         // ⭐ 手指容錯（避免誤觸）
 onStart:function(evt){
 
 draggingItemId = evt.item.dataset.id
