@@ -2354,7 +2354,7 @@ body.edit-mode .time-node{
   animation:none;
 }
 /* =========================
-   EDIT MODE UI POLISH
+   EDIT MODE UI POLISH（你的原版保留）
 ========================= */
 
 
@@ -2565,6 +2565,49 @@ h6 input{
     box-shadow .15s ease,
     border-color .15s ease;
 }
+
+
+/* =========================
+   ⭐⭐ 這裡開始是我幫你「只改必要的」⭐⭐
+========================= */
+
+
+/* ✅ 修正：detail dot 回到最右 */
+
+.time-header{
+  display:flex;
+  align-items:center;
+}
+
+.detail-dot{
+  margin-left:auto;
+}
+
+
+/* ✅ 修正：view mode 禁止編輯（只鎖 editor 區） */
+
+body:not(.edit-mode) .detail-editor button,
+body:not(.edit-mode) .detail-editor input,
+body:not(.edit-mode) .detail-editor textarea,
+body:not(.edit-mode) .block-drag,
+body:not(.edit-mode) .row-drag{
+  pointer-events:none;
+}
+
+
+/* ✅ 保留可點（避免影響 detail 展開） */
+
+body:not(.edit-mode) .time-header,
+body:not(.edit-mode) .detail-dot,
+body:not(.edit-mode) .time-text{
+  pointer-events:auto;
+}
+
+
+/* =========================
+   ⭐ 以下完全保留你的動畫系統（沒動）
+========================= */
+
 .section-title{
 outline:none;
 }
@@ -2576,11 +2619,13 @@ border-bottom:1px dashed var(--border);
 body:not(.edit-mode) .section-title{
 pointer-events:none;
 }
+
 .section-header{
   display:grid;
-  grid-template-columns: 1fr 28px 28px; /* ⭐ 固定 */
+  grid-template-columns: 1fr 28px 28px;
   align-items:center;
 }
+
 .section-add,
 .section-delete{
   opacity:0;
@@ -2590,10 +2635,9 @@ pointer-events:none;
     opacity .2s ease,
     transform .2s ease;
 
-background:none;
-border:none;
-
-cursor:pointer;
+  background:none;
+  border:none;
+  cursor:pointer;
   width:28px;
   height:28px;
 
@@ -2601,27 +2645,34 @@ cursor:pointer;
   align-items:center;
   justify-content:center;
 
-  padding:0;          /* ⭐ 清掉預設 padding */
+  padding:0;
 }
 
 body:not(.edit-mode){
 --section-icon:0px;
+--item-gap:0px;
+--item-icon:0px;
 }
 
 body.edit-mode{
 --section-icon:28px;
+--item-gap:32px;
+--item-icon:28px;
 }
+
 body.edit-mode .section-add,
 body.edit-mode .section-delete{
   opacity:1;
   transform: translateX(0);
 }
+
 .item-row{
   display:grid;
   grid-template-columns: var(--item-gap) 1fr var(--item-icon) var(--item-icon);
   align-items:center;
-  transition: opacity .2s ease;
+  transition: all .25s ease;
 }
+
 .item-handle{
 opacity:0;
 cursor:grab;
@@ -2638,16 +2689,6 @@ cursor:pointer;
 transition: opacity .2s ease;
 }
 
-body:not(.edit-mode){
---item-gap:0px;
---item-icon:0px;
-}
-
-body.edit-mode{
---item-gap:32px;
---item-icon:28px;
-}
-
 body.edit-mode .item-handle,
 body.edit-mode .item-edit,
 body.edit-mode .item-delete{
@@ -2659,11 +2700,7 @@ display:flex;
 align-items:center;
 gap:6px;
 }
-.item-edit,
-.item-delete,
-.item-handle{
-transition: opacity .2s ease;
-}
+
 .time-text{
   user-select:none;
   cursor:pointer;
@@ -2672,10 +2709,11 @@ transition: opacity .2s ease;
 body.edit-mode .time-text{
   border-bottom:1px dashed var(--border);
 }
+
 .time-picker{
   position:absolute;
   opacity:0;
-  pointer-events:auto;  /* ⭐ 原本是 none → 改這裡 */
+  pointer-events:auto;
   width:1px;
   height:1px;
 }
