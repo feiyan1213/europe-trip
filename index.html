@@ -133,9 +133,8 @@ h1,h2,h3{ font-weight:600; }
 small,.text-muted{ font-weight:500; }
 
 /* sections fade */
-.content-section{ display:none; padding:15px; animation:fadeIn .3s ease; }
+.content-section{ display:none; padding:15px;}
 .content-section.active{ display:block; }
-@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
 
 /* =========================
    1) Header / Sticky / Clock area (smooth day<->night)
@@ -405,9 +404,8 @@ backdrop-filter: blur(4px);
 /* =========================
    7) Day content + timeline
 ========================= */
-.day-content{ display:none; animation:fadeIn .4s ease; }
+.day-content{ display:none; }
 .day-content.active{ display:block; }
-
 .day-content .text-primary{ color:var(--text-1) !important; }
 html[data-theme="dark"] .day-content .text-primary{ color:var(--text-1) !important; }
 
@@ -425,7 +423,7 @@ html[data-theme="dark"] .day-content .text-primary{ color:var(--text-1) !importa
 body.day-switch .time-item{
   opacity:0;
   transform:translateY(6px);
-  animation:timelineFade .6s ease forwards;
+  animation:timelineFade .8s ease forwards;
 }
 .time-item::before{
   content:'';
@@ -2717,6 +2715,7 @@ body.edit-mode .time-text{
   width:1px;
   height:1px;
 }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
@@ -3332,7 +3331,8 @@ function switchDay(dayId, el) {
     // ⭐ 動畫結束後移除
     setTimeout(()=>{
         document.body.classList.remove("day-switch");
-    }, 600); // 要跟你的 timelineFade 時間一致
+    }, 800); // 要跟你的 timelineFade 時間一致
+
 }
 // --- 記帳邏輯（新版：每筆鎖匯率 / 今日+分日 / 展開狀態保留） ---
 let expenses = JSON.parse(localStorage.getItem('trip_v2026')) || [];
