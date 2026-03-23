@@ -1046,10 +1046,15 @@ function switchTab(id,el){
   el.classList.add('active');
   window.scrollTo(0,0);
   document.body.classList.toggle('itinerary-active', id==='itinerary');
-  // 離開行程頁隱藏住宿條帶
+  // 離開行程頁隱藏住宿條帶；回來時重新顯示
   if(id!=='itinerary'){
     var bar=document.getElementById('hotel-bar-sticky');
     if(bar) bar.classList.remove('visible');
+  } else {
+    // 取得目前選中的日期，重新更新住宿條帶
+    var activeTab=document.querySelector('.day-tab.active');
+    var dayId=activeTab?activeTab.getAttribute('onclick').match(/'([^']+)'/)[1]:'all';
+    updateHotelBar(dayId);
   }
   // 重算 itinerary padding
   if(typeof updateItineraryPadding==='function') applyFixedLayout();
@@ -1111,12 +1116,12 @@ function toggleManualRate(ev){
 function updateRateHintUI(){
   var curr=(document.getElementById('exp-curr')||{}).value||'TWD';
   var hint=document.getElementById('rateHintText'); if(!hint) return;
-  if(ratesStatus==='loading'){ hint.innerText='匯率載入中\u2026'; return; }
+  if(ratesStatus==='loading'){ hint.innerText='匯率載入中…'; return; }
   if(curr==='TWD'){ hint.innerText='匯率：TWD'; return; }
   var r=rates[curr]; var manual=parseFloat((document.getElementById('manualRateInput')||{}).value);
-  var t=fmtHHMM(lastRateFetchedAt); var tLabel=t?'  '+t:'';
-  if(Number.isFinite(manual)&&manual>0){ hint.innerText='匯率：'+curr+' \u2192 TWD '+manual.toFixed(2)+'\uff08\u624b\u52d5\uff09'; return; }
-  if(Number.isFinite(r)){ hint.innerText='匯率：'+curr+' \u2192 TWD '+r.toFixed(2)+tLabel+(ratesStatus==='offline'?' \u26a0':' \u2713'); return; }
+  var t=fmtHHMM(lastRateFetchedAt); var tLabel=t?'<span class="ms-2"><i class="far fa-clock ms-1 opacity-75"></i> '+t+'</span>':'';
+  if(Number.isFinite(manual)&&manual>0){ hint.innerText='匯率：'+curr+' → TWD '+manual.toFixed(2)+'（手動）'; return; }
+  if(Number.isFinite(r)){ hint.innerHTML='匯率：'+curr+' → TWD '+r.toFixed(2)+tLabel+(ratesStatus==='offline'?' ⚠':''); return; }
   hint.innerText='匯率：無法取得，請手動輸入';
 }
 async function refreshRates(showToast){
@@ -1132,13 +1137,13 @@ async function refreshRates(showToast){
     rates.HKD=data.rates.HKD?(1/data.rates.HKD):null;
     ratesStatus='ok'; lastRateFetchedAt=Date.now();
     localStorage.setItem('trip_budget_rates_cache',JSON.stringify({at:lastRateFetchedAt,rates:rates}));
-    if(showToast) showRateToast('\u2713 匯率已更新','var(--bs-primary)');
+    if(showToast) showRateToast('✓ 匯率已更新','var(--bs-primary)');
     else updateRateHintUI();
   }catch(e){
     ratesStatus='offline';
     try{ var c=JSON.parse(localStorage.getItem('trip_budget_rates_cache')||'null'); if(c&&c.rates) rates=Object.assign(rates,c.rates); }catch(x){}
     updateRateHintUI();
-    if(showToast) showRateToast('\u26a0 無法取得即時匯率','var(--danger-fg)');
+    if(showToast) showRateToast('⚠ 無法取得即時匯率','var(--danger-fg)');
   }
 }
 function showRateToast(msg,color){
@@ -1159,7 +1164,7 @@ function addExp(){
     var manual=parseFloat((document.getElementById('manualRateInput')||{}).value);
     if(Number.isFinite(manual)&&manual>0){ rateAtSave=manual; rateSource='manual'; }
     else if(Number.isFinite(rates[curr])){ rateAtSave=rates[curr]; rateSource=(ratesStatus==='ok')?'auto':'cache'; }
-    else{ var ht=document.getElementById('rateHintText'); if(ht){ ht.innerText='\u8acb\u8f38\u5165 '+curr+'\u2192TWD \u624b\u52d5\u532f\u7387'; ht.style.color='var(--danger-fg)'; setTimeout(function(){ ht.style.color=''; updateRateHintUI(); },2000); } return; }
+    else{ var ht=document.getElementById('rateHintText'); if(ht){ ht.innerText='請輸入 '+curr+'→TWD 手動匯率'; ht.style.color='var(--danger-fg)'; setTimeout(function(){ ht.style.color=''; updateRateHintUI(); },2000); } return; }
   }
   var twdAtSave=(curr==='TWD')?amt:(amt*rateAtSave);
   var now=new Date();
@@ -1169,7 +1174,7 @@ function addExp(){
   render(); updateLocalSummary();
 }
 function deleteExp(id){ expenses=expenses.filter(function(e){ return e.id!==id; }); localStorage.setItem('trip_v2026',JSON.stringify(expenses)); render(); updateLocalSummary(); }
-function clearAll(){ if(confirm('\u78ba\u5b9a\u8981\u6e05\u7a7a\u6240\u6709\u8a18\u5e33\u7d00\u9304\u55ce\uff1f')){ expenses=[]; localStorage.setItem('trip_v2026',JSON.stringify(expenses)); render(); updateLocalSummary(); } }
+function clearAll(){ if(confirm('確定要清空所有記帳紀錄嗎？')){ expenses=[]; localStorage.setItem('trip_v2026',JSON.stringify(expenses)); render(); updateLocalSummary(); } }
 
 function render(){
   var todayKey=getLocalDayKey(new Date());
@@ -1189,13 +1194,13 @@ function render(){
   var tTot=document.getElementById('todayTotal'); if(tTot) tTot.innerText=toMoney(dTWD);
   var tSub=document.getElementById('todaySub'); if(tSub) tSub.innerText='CHF '+dCHF.toFixed(1)+' | EUR '+dEUR.toFixed(1)+' | HKD '+dHKD.toFixed(1);
   var todayListEl=document.getElementById('todayList');
-  if(todayListEl){ todayListEl.innerHTML=todayItems.length?todayItems.slice().sort(function(a,b){return a.createdAt<b.createdAt?1:-1;}).map(renderExpCard).join(''):'<div class="text-center small text-muted py-2">\u4eca\u5929\u5c1a\u7121\u8a18\u5e33</div>'; }
+  if(todayListEl){ todayListEl.innerHTML=todayItems.length?todayItems.slice().sort(function(a,b){return a.createdAt<b.createdAt?1:-1;}).map(renderExpCard).join(''):'<div class="text-center small text-muted py-2">今天尚無記帳</div>'; }
   var dgEl=document.getElementById('dayGroups');
-  if(dgEl){ var other=dayKeys.filter(function(k){ return k!==todayKey; }); dgEl.innerHTML=other.length?other.map(function(k){ return renderDayGroup(k,byDay.get(k)); }).join(''):'<div class="text-center small text-muted py-2">\u5c1a\u7121\u5176\u4ed6\u65e5\u671f\u7d00\u9304</div>'; }
+  if(dgEl){ var other=dayKeys.filter(function(k){ return k!==todayKey; }); dgEl.innerHTML=other.length?other.map(function(k){ return renderDayGroup(k,byDay.get(k)); }).join(''):'<div class="text-center small text-muted py-2">尚無其他日期紀錄</div>'; }
   setPayMethod(currentPay,null); updateRateHintUI(); renderTimeline();
 }
 function renderExpCard(e){
-  return '<div class="card-custom mb-2"><div class="exp-row"><div class="exp-left"><div class="exp-left-top"><div class="exp-cat">'+escapeHtml(e.cat||'\u5176\u4ed6')+'</div><button class="more-btn exp-more-left" data-more-btn="1" onclick="openMoreMenu('+e.id+',this)">&hellip;</button></div>'+(e.note?'<div class="exp-note">'+escapeHtml(e.note)+'</div>':'')+'</div><div class="exp-right"><div class="exp-right-top"><i class="fa-solid '+payIcon(e.pay)+' pay-ic exp-pay-ic"></i><div class="exp-money"><div class="exp-amt"><span>'+num(e.amt).toLocaleString(undefined,{maximumFractionDigits:1})+'</span><span>'+escapeHtml(e.curr||'TWD')+'</span></div><div class="exp-twd">NT$ '+toMoney(e.twdAtSave)+'</div></div></div></div></div></div>';
+  return '<div class="card-custom mb-2"><div class="exp-row"><div class="exp-left"><div class="exp-left-top"><div class="exp-cat">'+escapeHtml(e.cat||'其他')+'</div><button class="more-btn exp-more-left" data-more-btn="1" onclick="openMoreMenu('+e.id+',this)">&hellip;</button></div>'+(e.note?'<div class="exp-note">'+escapeHtml(e.note)+'</div>':'')+'</div><div class="exp-right"><div class="exp-right-top"><i class="fa-solid '+payIcon(e.pay)+' pay-ic exp-pay-ic"></i><div class="exp-money"><div class="exp-amt"><span>'+num(e.amt).toLocaleString(undefined,{maximumFractionDigits:1})+'</span><span>'+escapeHtml(e.curr||'TWD')+'</span></div><div class="exp-twd">NT$ '+toMoney(e.twdAtSave)+'</div></div></div></div></div></div>';
 }
 var activePop=null;
 function closeEditPopover(){ if(activePop&&activePop.el) activePop.el.remove(); activePop=null; }
@@ -1204,7 +1209,7 @@ function addDays(dt,delta){ var x=new Date(dt); x.setDate(x.getDate()+delta); re
 function isValidYMD(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false; var p=s.split('-').map(Number); var t=new Date(p[0],p[1]-1,p[2]); return t.getFullYear()===p[0]&&(t.getMonth()+1)===p[1]&&t.getDate()===p[2]; }
 function setPopoverDateInput(pop,ymd){ var inp=pop.querySelector('input[data-role="day"]'); if(inp) inp.value=ymd; }
 function saveEditedDay(expId,newDay){
-  if(!isValidYMD(newDay)){ var pop=document.querySelector('.budget-popover'); if(pop){ var msg=pop.querySelector('.pop-error'); if(!msg){ msg=document.createElement('div'); msg.className='pop-error small mt-1'; msg.style.color='var(--danger-fg)'; pop.appendChild(msg); } msg.innerText='\u65e5\u671f\u683c\u5f0f\u8acb\u7528 YYYY-MM-DD'; setTimeout(function(){ if(msg) msg.innerText=''; },2000); } return; }
+  if(!isValidYMD(newDay)){ var pop=document.querySelector('.budget-popover'); if(pop){ var msg=pop.querySelector('.pop-error'); if(!msg){ msg=document.createElement('div'); msg.className='pop-error small mt-1'; msg.style.color='var(--danger-fg)'; pop.appendChild(msg); } msg.innerText='日期格式請用 YYYY-MM-DD'; setTimeout(function(){ if(msg) msg.innerText=''; },2000); } return; }
   var idx=expenses.findIndex(function(e){ return e.id===expId; }); if(idx<0) return;
   expenses[idx].localDay=newDay; localStorage.setItem('trip_v2026',JSON.stringify(expenses)); closeEditPopover(); render();
 }
@@ -1212,7 +1217,7 @@ function openEditPopover(expId,anchorBtn){
   closeEditPopover();
   var e=expenses.find(function(x){ return x.id===expId; }); if(!e) return;
   var pop=document.createElement('div'); pop.className='budget-popover'; pop.dataset.popover='budget-edit';
-  pop.innerHTML='<div class="pop-title">\u4ed8\u6b3e\u65e5</div><div class="pop-pills"><div class="pop-pill" data-delta="0">\u4eca\u5929</div><div class="pop-pill" data-delta="-1">\u6628\u5929</div><div class="pop-pill" data-delta="-2">\u524d\u5929</div></div><div class="pop-row"><input data-role="day" inputmode="numeric" placeholder="YYYY-MM-DD"/></div><div class="pop-actions"><button type="button" class="pop-btn" data-act="cancel">\u53d6\u6d88</button><button type="button" class="pop-btn primary" data-act="save">\u4fdd\u5b58</button></div>';
+  pop.innerHTML='<div class="pop-title">付款日</div><div class="pop-pills"><div class="pop-pill" data-delta="0">今天</div><div class="pop-pill" data-delta="-1">昨天</div><div class="pop-pill" data-delta="-2">前天</div></div><div class="pop-row"><input data-role="day" inputmode="numeric" placeholder="YYYY-MM-DD"/></div><div class="pop-actions"><button type="button" class="pop-btn" data-act="cancel">取消</button><button type="button" class="pop-btn primary" data-act="save">保存</button></div>';
   setPopoverDateInput(pop,e.localDay||getLocalDayKey(new Date(e.createdAt||Date.now())));
   var rect=anchorBtn.getBoundingClientRect(),sx=window.scrollX||0,sy=window.scrollY||0;
   pop.style.left=(sx+rect.left)+'px'; pop.style.top=(sy+rect.bottom+6)+'px';
@@ -1229,7 +1234,7 @@ function closeMoreMenu(){ if(activeMoreMenu) activeMoreMenu.remove(); activeMore
 function openMoreMenu(expId,anchorBtn){
   closeMoreMenu(); closeEditPopover();
   var menu=document.createElement('div'); menu.className='more-menu';
-  menu.innerHTML='<div class="menu-item" data-act="edit"><i class="fas fa-pen"></i> \u7de8\u8f2f\u4ed8\u6b3e\u65e5</div><div class="menu-item danger" data-act="delete"><i class="fas fa-trash-alt"></i> \u522a\u9664</div>';
+  menu.innerHTML='<div class="menu-item" data-act="edit"><i class="fas fa-pen"></i> 編輯付款日</div><div class="menu-item danger" data-act="delete"><i class="fas fa-trash-alt"></i> 刪除</div>';
   var rect=anchorBtn.getBoundingClientRect(),sx=window.scrollX||0,sy=window.scrollY||0;
   menu.style.left=(sx+rect.left)+'px'; menu.style.top=(sy+rect.bottom+6)+'px';
   document.body.appendChild(menu);
@@ -1242,7 +1247,7 @@ document.addEventListener('click',function(ev){ if(activeMoreMenu&&!activeMoreMe
 function renderDayGroup(dayKey,items){
   var sumTWD=items.reduce(function(a,e){ return a+num(e.twdAtSave); },0); var isOpen=openDaySet.has(dayKey);
   var body=items.slice().sort(function(a,b){ return a.createdAt<b.createdAt?1:-1; }).map(renderExpCard).join('');
-  return '<div class="day-group '+(isOpen?'open':'')+'" data-day="'+dayKey+'"><div class="day-group-head" onclick="toggleDayGroup(\''+dayKey+'\')"><div class="day-group-title">'+formatLocalDayLabel(dayKey)+'</div><div class="d-flex align-items-center"><div class="day-group-sum">NT$ '+toMoney(sumTWD)+'</div><div class="day-group-toggle">\u25be</div></div></div><div class="day-group-body">'+body+'</div></div>';
+  return '<div class="day-group '+(isOpen?'open':'')+'" data-day="'+dayKey+'"><div class="day-group-head" onclick="toggleDayGroup(\''+dayKey+'\')"><div class="day-group-title">'+formatLocalDayLabel(dayKey)+'</div><div class="d-flex align-items-center"><div class="day-group-sum">NT$ '+toMoney(sumTWD)+'</div><div class="day-group-toggle">▾</div></div></div><div class="day-group-body">'+body+'</div></div>';
 }
 function toggleDayGroup(dayKey){
   if(openDaySet.has(dayKey)) openDaySet.delete(dayKey); else openDaySet.add(dayKey);
@@ -1276,7 +1281,7 @@ function syncPackControlsUI(){
   var sw=document.getElementById('carryModeSwitch'); if(sw) sw.checked=!!carryMode;
   var act=document.getElementById('template-actions'); if(act) act.style.display=(packView==='template')?'block':'none';
   var badge=document.getElementById('pack-mode-badge');
-  if(badge){ badge.classList.remove('is-carry','is-template'); if(packView==='template'){ badge.textContent='\u6a21\u677f'; badge.classList.add('is-template'); } else if(carryMode){ badge.textContent='\u96a8\u8eab\u5305'; badge.classList.add('is-carry'); } else{ badge.textContent='\u672c\u6b21\u6e05\u55ae'; } }
+  if(badge){ badge.classList.remove('is-carry','is-template'); if(packView==='template'){ badge.textContent='模板'; badge.classList.add('is-template'); } else if(carryMode){ badge.textContent='隨身包'; badge.classList.add('is-carry'); } else{ badge.textContent='本次清單'; } }
 }
 function getActivePackRef(){ return packView==='template'?packTemplate:packTrip; }
 function saveActivePack(){ saveJSON(packView==='template'?PACK_TEMPLATE_KEY:PACK_TRIP_KEY,packView==='template'?packTemplate:packTrip); }
@@ -1288,32 +1293,32 @@ function setPackView(view){
 function toggleCarryMode(on){ carryMode=!!on; localStorage.setItem(PACK_CARRY_KEY,carryMode?'1':'0'); renderPackList(); }
 function carryKey(c,t){ return c+'||'+t; }
 function toggleCarryChecked(c,t){ var k=carryKey(c,t); carryCheckedMap[k]=!carryCheckedMap[k]; saveJSON(PACK_CARRY_CHECK_KEY,carryCheckedMap); }
-function resetTripFromTemplate(){ if(!confirm('\u78ba\u5b9a\u8981\u7528\u300c\u6a21\u677f\u300d\u91cd\u5efa\u300c\u672c\u6b21\u6e05\u55ae\u300d\u55ce\uff1f')) return; packTrip=deepCopy(packTemplate); saveJSON(PACK_TRIP_KEY,packTrip); updateLocalSummary(); setPackView('trip'); alert('\u5df2\u5f9e\u6a21\u677f\u91cd\u5efa\u672c\u6b21\u6e05\u55ae\u3002'); }
+function resetTripFromTemplate(){ if(!confirm('確定要用「模板」重建「本次清單」嗎？')) return; packTrip=deepCopy(packTemplate); saveJSON(PACK_TRIP_KEY,packTrip); updateLocalSummary(); setPackView('trip'); alert('已從模板重建本次清單。'); }
 function applyTemplateToTripMerge(){
-  if(!confirm('\u78ba\u5b9a\u8981\u628a\u300c\u6a21\u677f\u300d\u5408\u4f75\u5957\u7528\u5230\u300c\u672c\u6b21\u6e05\u55ae\u300d\u55ce\uff1f')) return;
+  if(!confirm('確定要把「模板」合併套用到「本次清單」嗎？')) return;
   var byCat=new Map(); packTrip.forEach(function(c){ byCat.set(c.category,c); });
   packTemplate.forEach(function(tc){ var items=tc.items||[]; if(!byCat.has(tc.category)){ var nc={category:tc.category,items:[]}; items.forEach(function(it){ nc.items.push({text:it.text,checked:false}); }); packTrip.push(nc); byCat.set(nc.category,nc); return; } var tc2=byCat.get(tc.category); tc2.items=tc2.items||[]; var set=new Set(tc2.items.map(function(it){ return it.text; })); items.forEach(function(it){ if(!set.has(it.text)){ tc2.items.push({text:it.text,checked:false}); set.add(it.text); } }); });
-  saveJSON(PACK_TRIP_KEY,packTrip); updateLocalSummary(); setPackView('trip'); alert('\u5df2\u5408\u4f75\u5957\u7528\u6a21\u677f\u5230\u672c\u6b21\u6e05\u55ae\u3002');
+  saveJSON(PACK_TRIP_KEY,packTrip); updateLocalSummary(); setPackView('trip'); alert('已合併套用模板到本次清單。');
 }
 function addNewCategory(){
   var inp=document.getElementById('new-cat-input'); var name=(inp?inp.value:'').trim(); if(!name) return;
-  var active=getActivePackRef(); if(active.find(function(c){ return c.category===name; })){ alert('\u6b64\u985e\u5225\u5df2\u5b58\u5728'); return; }
+  var active=getActivePackRef(); if(active.find(function(c){ return c.category===name; })){ alert('此類別已存在'); return; }
   active.push({category:name,items:[]}); if(inp) inp.value=''; saveActivePack(); renderPackList(); updateLocalSummary();
 }
 function addItemToCat(catIdx){
   var active=getActivePackRef(); var cat=active[catIdx]; if(!cat) return;
-  var n=prompt('\u5728\u300c'+cat.category+'\u300d\u65b0\u589e\u9805\u76ee\uff1a'); if(!n||!n.trim()) return;
+  var n=prompt('在「'+cat.category+'」新增項目：'); if(!n||!n.trim()) return;
   cat.items=cat.items||[]; cat.items.push({text:n.trim(),checked:false,carry:false}); saveActivePack(); renderPackList(); updateLocalSummary();
 }
 function toggleItem(ci,ii){ var a=getActivePackRef(); var c=a[ci]; if(!c||!c.items||!c.items[ii]) return; c.items[ii].checked=!c.items[ii].checked; saveActivePack(); renderPackList(); }
-function deleteCategory(ci){ var a=getActivePackRef(); var c=a[ci]; if(!c) return; if(confirm('\u78ba\u5b9a\u8981\u522a\u9664\u300c'+c.category+'\u300d\u6574\u500b\u5206\u985e\u55ce\uff1f')){ a.splice(ci,1); saveActivePack(); renderPackList(); updateLocalSummary(); } }
+function deleteCategory(ci){ var a=getActivePackRef(); var c=a[ci]; if(!c) return; if(confirm('確定要刪除「'+c.category+'」整個分類嗎？')){ a.splice(ci,1); saveActivePack(); renderPackList(); updateLocalSummary(); } }
 function deleteSingleItem(ci,ii){ var a=getActivePackRef(); var c=a[ci]; if(!c||!c.items) return; c.items.splice(ii,1); saveActivePack(); renderPackList(); updateLocalSummary(); }
-function clearCheckedItems(){ if(!confirm('\u78ba\u5b9a\u8981\u6e05\u9664\u6240\u6709\u5df2\u52fe\u9078\u9805\u76ee\u55ce\uff1f')) return; var a=getActivePackRef(); a.forEach(function(c){ c.items=(c.items||[]).filter(function(i){ return !i.checked; }); }); saveActivePack(); renderPackList(); updateLocalSummary(); }
+function clearCheckedItems(){ if(!confirm('確定要清除所有已勾選項目嗎？')) return; var a=getActivePackRef(); a.forEach(function(c){ c.items=(c.items||[]).filter(function(i){ return !i.checked; }); }); saveActivePack(); renderPackList(); updateLocalSummary(); }
 var activeCarryMenu=null;
 function closeCarryMenu(){ if(activeCarryMenu) activeCarryMenu.remove(); activeCarryMenu=null; }
 document.addEventListener('click',function(e){ if(activeCarryMenu&&activeCarryMenu.contains(e.target)) return; if(e.target&&e.target.closest&&e.target.closest('.carry-more-btn')) return; closeCarryMenu(); });
 function toggleCarryFlag(ci,ii){ if(packView!=='trip') return; var c=packTrip[ci]; if(!c||!c.items||!c.items[ii]) return; c.items[ii].carry=!c.items[ii].carry; saveJSON(PACK_TRIP_KEY,packTrip); closeCarryMenu(); renderPackList(); }
-function openCarryMenu(ci,ii,btn){ closeCarryMenu(); if(packView!=='trip') return; var c=packTrip[ci]; if(!c||!c.items||!c.items[ii]) return; var isOn=!!c.items[ii].carry; var menu=document.createElement('div'); menu.className='carry-menu'; menu.innerHTML='<div class="carry-menu-item" onclick="toggleCarryFlag('+ci+','+ii+')">'+(isOn?'\u5f9e\u96a8\u8eab\u5305\u79fb\u9664':'\u52a0\u5165\u96a8\u8eab\u5305')+'</div>'; document.body.appendChild(menu); activeCarryMenu=menu; var rect=btn.getBoundingClientRect(); menu.style.top=(rect.bottom+window.scrollY+6)+'px'; menu.style.left=Math.max(8,rect.right+window.scrollX-menu.offsetWidth)+'px'; }
+function openCarryMenu(ci,ii,btn){ closeCarryMenu(); if(packView!=='trip') return; var c=packTrip[ci]; if(!c||!c.items||!c.items[ii]) return; var isOn=!!c.items[ii].carry; var menu=document.createElement('div'); menu.className='carry-menu'; menu.innerHTML='<div class="carry-menu-item" onclick="toggleCarryFlag('+ci+','+ii+')">'+(isOn?'從隨身包移除':'加入隨身包')+'</div>'; document.body.appendChild(menu); activeCarryMenu=menu; var rect=btn.getBoundingClientRect(); menu.style.top=(rect.bottom+window.scrollY+6)+'px'; menu.style.left=Math.max(8,rect.right+window.scrollX-menu.offsetWidth)+'px'; }
 function renderPackList(){
   var container=document.getElementById('pack-list-container'); if(!container) return;
   syncPackControlsUI();
@@ -1326,14 +1331,14 @@ function renderPackList(){
     var ci=active.indexOf(catObj); var isTemplate=(packView==='template');
     var html='<div class="card-custom mb-3"><div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2"><span class="fw-bold text-primary"># '+catObj.category+'</span><div><button class="btn btn-sm btn-outline-dark py-0" data-act="add-item" type="button" onclick="addItemToCat('+ci+')"><i class="fas fa-plus"></i></button><button class="btn btn-sm btn-icon-mini ms-0" onclick="deleteCategory('+ci+')"><i class="fas fa-trash-alt"></i></button></div></div>';
     var items=catObj.items||[]; var itemsToShow=(eCM&&!isTemplate)?items.filter(function(it){ return !!it.carry; }):items;
-    if(!itemsToShow.length){ html+='<div class="text-center py-2 small text-muted">\u66ab\u7121\u9805\u76ee</div>'; }
+    if(!itemsToShow.length){ html+='<div class="text-center py-2 small text-muted">暫無項目</div>'; }
     else{ itemsToShow.forEach(function(item){
-      var ii=items.indexOf(item); var cb=(!isTemplate&&item.carry)?'<span class="carry-badge">\u2022 \u96a8\u8eab</span>':''; var isCL=eCM&&!isTemplate;
+      var ii=items.indexOf(item); var cb=(!isTemplate&&item.carry)?'<span class="carry-badge">• 隨身</span>':''; var isCL=eCM&&!isTemplate;
       var ck=carryKey(catObj.category,item.text); var cc=!!carryCheckedMap[ck];
       var chk=isTemplate?'':(isCL?'<input type="checkbox" '+(cc?'checked':'')+' onclick="event.stopPropagation();" onchange="toggleCarryChecked(\''+catObj.category.replace(/'/g,"\\'")+'\',' +'\''+item.text.replace(/'/g,"\\'")+'\')">':'<input type="checkbox" '+(item.checked?'checked':''));
       if(!isTemplate&&!isCL) chk+='>'; else if(isCL) chk+='>';
       var rowClick=(isTemplate||isCL)?'':'onclick="toggleItem('+ci+','+ii+')"';
-      var rbtns=isTemplate?'<button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>':(isCL?'':'<button class="btn btn-sm text-muted carry-more-btn" onclick="event.stopPropagation();openCarryMenu('+ci+','+ii+',this)">\u22ef</button><button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>');
+      var rbtns=isTemplate?'<button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>':(isCL?'':'<button class="btn btn-sm text-muted carry-more-btn" onclick="event.stopPropagation();openCarryMenu('+ci+','+ii+',this)">⋯</button><button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>');
       html+='<div class="pack-item d-flex align-items-center justify-content-between py-1"><div class="d-flex align-items-center flex-grow-1" '+rowClick+'>'+chk+'<span class="pack-text '+((!isTemplate&&!isCL&&item.checked)?'checked':'')+' '+(isTemplate?'':'ms-2')+'">'+item.text+'</span>'+cb+'</div><div class="d-flex align-items-center gap-1">'+rbtns+'</div></div>';
     }); }
     html+='</div>'; container.innerHTML+=html;
@@ -1353,37 +1358,42 @@ function analyzeShareContent(){
   var useExp=document.getElementById('sync-share-exp').checked,usePack=document.getElementById('sync-share-pack').checked,useFav=document.getElementById('sync-share-fav').checked;
   var exp=JSON.parse(localStorage.getItem('trip_v2026')||'[]');
   var fav=JSON.parse(localStorage.getItem('trip_favorites')||'[]');
-  var pt=JSON.parse(localStorage.getItem(PACK_TEMPLATE_KEY)||'[]');
-  var pc=JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]');
+  var pt=packTemplate||JSON.parse(localStorage.getItem(PACK_TEMPLATE_KEY)||'[]');
+  var pc=packTrip||JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]');
   var td=loadTripData(); var dc=(td.days||[]).reduce(function(n,d){ return n+(d.sections||[]).reduce(function(m,s){ return m+(s.items||[]).length; },0); },0);
-  var html='<div class="fw-bold mb-2">\u5c07\u5206\u4eab\uff1a</div>';
-  if(useIt) html+='\u2713 \u884c\u7a0b '+dc+' \u500b\u9805\u76ee<br>';
-  if(useExp) html+='\u2713 \u8a18\u5e33 '+exp.length+' \u7b46<br>';
-  if(usePack){ html+='\u2713 \u884c\u674e\u6a21\u677f '+pt.length+' \u9805<br>'; html+='\u2713 \u672c\u6b21\u884c\u674e '+pc.length+' \u9805<br>'; }
-  if(useFav) html+='\u2713 \u6536\u85cf '+fav.length+' \u9805<br>';
-  if(!useIt&&!useExp&&!usePack&&!useFav) html='\uff08\u672a\u9078\u64c7\u4efb\u4f55\u5167\u5bb9\uff09';
+  var html='<div class="fw-bold mb-2">將分享：</div>';
+  if(useIt) html+='✓ 行程 '+dc+' 項<br>';
+  if(useExp) html+='✓ 記帳 '+exp.length+' 筆<br>';
+  if(usePack){ html+='✓ 行李模板 '+pt.length+' 類<br>'; html+='✓ 本次行李 '+pc.length+' 類<br>'; }
+  if(useFav) html+='✓ 收藏 '+fav.length+' 項<br>';
+  if(!useIt&&!useExp&&!usePack&&!useFav) html='（未選擇任何內容）';
   document.getElementById('sync-share-preview').innerHTML=html; document.getElementById('sync-share-actions').classList.remove('d-none');
 }
-function cancelSharePreview(){ document.getElementById('sync-share-preview').innerHTML='\uff08\u5df2\u53d6\u6d88\uff09'; document.getElementById('sync-share-actions').classList.add('d-none'); }
+function cancelSharePreview(){ document.getElementById('sync-share-preview').innerHTML='（已取消）'; document.getElementById('sync-share-actions').classList.add('d-none'); }
 function confirmShareGenerate(btn){
   var useIt=document.getElementById('sync-share-itinerary').checked;
   var useExp=document.getElementById('sync-share-exp').checked,usePack=document.getElementById('sync-share-pack').checked,useFav=document.getElementById('sync-share-fav').checked;
   var fav=useFav?JSON.parse(localStorage.getItem('trip_favorites')||'[]'):[];
   var exp=useExp?JSON.parse(localStorage.getItem('trip_v2026')||'[]'):[];
-  var pt=usePack?JSON.parse(localStorage.getItem(PACK_TEMPLATE_KEY)||'[]'):[];
-  var pc=usePack?JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]'):[];
+  // 用記憶體變數（最新狀態），不從 localStorage 讀避免未存資料遺失
+  var pt=usePack?(packTemplate||JSON.parse(localStorage.getItem(PACK_TEMPLATE_KEY)||'[]')):[];
+  var pc=usePack?(packTrip||JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]')):[];
   var td=useIt?loadTripData():null; var hd=useIt?loadHotelData():{};
   var data={favorites:fav,expenses:exp,packingTemplate:pt,packingTrip:pc,packing:pc,tripData:td,hotelData:hd,generatedAt:new Date().toISOString()};
   var code=btoa(encodeURIComponent(JSON.stringify(data))); window._lastSyncCode=code;
   navigator.clipboard.writeText(code).then(function(){
-    var s=''; if(useIt) s+='\u884c\u7a0b '; if(useExp) s+='\u8a18\u5e33 '+exp.length+'\u7b46 '; if(usePack) s+='\u884c\u674e '; if(useFav) s+='\u6536\u85cf '+fav.length+'\u9805';
+    var s='';
+    if(useIt){ var itDays=td?td.days:loadTripData().days; var itCount=0; itDays.forEach(function(d){d.sections.forEach(function(s2){itCount+=s2.items.length;});}); s+='行程 '+itCount+'項 '; }
+    if(useExp) s+='記帳 '+exp.length+'筆 ';
+    if(usePack){ s+='行李 '+pc.length+'類 '; }
+    if(useFav) s+='收藏 '+fav.length+'項';
     saveSyncLog('export','success',s.trim());
-    var prev=document.getElementById('sync-share-preview'); if(prev) prev.innerHTML+='<hr class="my-2"><div class="text-success fw-bold">\u540c\u6b65\u78bc\u5df2\u7522\u751f \u2713</div><div class="small text-muted">\u7522\u751f\u6642\u9593\uff1a'+new Date().toLocaleString()+'</div>';
+    var prev=document.getElementById('sync-share-preview'); if(prev) prev.innerHTML+='<hr class="my-2"><div class="text-success fw-bold">同步碼已產生 ✓</div><div class="small text-muted">產生時間：'+new Date().toLocaleString()+'</div>';
     btn.classList.add('is-success'); btn.disabled=true; setTimeout(function(){ btn.classList.remove('is-success'); btn.disabled=false; },1500);
-  }).catch(function(){ alert('\u8907\u88fd\u5931\u6557\uff0c\u8acb\u624b\u52d5\u8907\u88fd'); });
+  }).catch(function(){ alert('複製失敗，請手動複製'); });
 }
 function analyzeSyncContent(){
-  var inp=document.getElementById('sync-code-input'); if(!inp||!inp.value.trim()){ document.getElementById('sync-recv-preview').innerHTML='<span style="color:var(--danger-fg)">\u8acb\u5148\u8cbc\u4e0a\u540c\u6b65\u78bc</span>'; return; }
+  var inp=document.getElementById('sync-code-input'); if(!inp||!inp.value.trim()){ document.getElementById('sync-recv-preview').innerHTML='<span style="color:var(--danger-fg)">請先貼上同步碼</span>'; return; }
   try{
     var decoded=JSON.parse(decodeURIComponent(atob(inp.value.trim())));
     var useIt=document.getElementById('sync-recv-itinerary').checked;
@@ -1392,19 +1402,24 @@ function analyzeSyncContent(){
     var localPT=JSON.parse(localStorage.getItem(PACK_TEMPLATE_KEY)||'[]'),localPC=JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]');
     var localTD=loadTripData(); var lDC=(localTD.days||[]).reduce(function(n,d){ return n+(d.sections||[]).reduce(function(m,s){ return m+(s.items||[]).length; },0); },0);
     var recvTD=decoded.tripData; var rDC=recvTD?(recvTD.days||[]).reduce(function(n,d){ return n+(d.sections||[]).reduce(function(m,s){ return m+(s.items||[]).length; },0); },0):0;
-    var html='<div class="fw-bold mb-2">\u5c07\u66f4\u65b0\uff1a</div>';
-    if(useIt) html+='\u2713 \u884c\u7a0b '+lDC+' \u2192 '+rDC+' \u9805<br>';
-    if(useExp) html+='\u2713 \u8a18\u5e33 '+localExp.length+' \u2192 '+(decoded.expenses||[]).length+' \u7b46<br>';
-    if(usePack){ html+='\u2713 \u884c\u674e\u6a21\u677f '+localPT.length+' \u2192 '+(decoded.packingTemplate||[]).length+' \u9805<br>'; html+='\u2713 \u672c\u6b21\u884c\u674e '+localPC.length+' \u2192 '+(decoded.packingTrip||[]).length+' \u9805<br>'; }
-    if(useFav) html+='\u2713 \u6536\u85cf '+localFav.length+' \u2192 '+(decoded.favorites||[]).length+' \u9805<br>';
+    var html='<div class="fw-bold mb-2">將更新：</div>';
+    if(useIt) html+='✓ 行程 '+lDC+' → '+rDC+' 項<br>';
+    if(useExp) html+='✓ 記帳 '+localExp.length+' → '+(decoded.expenses||[]).length+' 筆<br>';
+    if(usePack){
+      var rptArr=decoded.packingTemplate||decoded.packing||[];
+      var rpcArr=decoded.packingTrip||decoded.packing||[];
+      html+='✓ 行李模板 '+localPT.length+' → '+rptArr.length+' 個分類<br>';
+      html+='✓ 本次行李 '+localPC.length+' → '+rpcArr.length+' 個分類<br>';
+    }
+    if(useFav) html+='✓ 收藏 '+localFav.length+' → '+(decoded.favorites||[]).length+' 項<br>';
     html+='<hr class="my-2">';
-    if(decoded.generatedAt) html+='<div class="small text-muted">\u6b64\u540c\u6b65\u78bc\u7522\u751f\u6642\u9593\uff1a'+new Date(decoded.generatedAt).toLocaleString()+'</div>';
+    if(decoded.generatedAt) html+='<div class="small text-muted">此同步碼產生時間：'+new Date(decoded.generatedAt).toLocaleString()+'</div>';
     document.getElementById('sync-recv-preview').innerHTML=html;
     document.getElementById('sync-recv-actions').classList.remove('d-none');
     pendingSyncData=decoded;
-  }catch(e){ console.error(e); saveSyncLog('import','fail','\u4ee3\u78bc\u7121\u6548'); document.getElementById('sync-recv-preview').innerHTML='<span style="color:var(--danger-fg)">\u274c \u4ee3\u78bc\u7121\u6548\uff0c\u8acb\u78ba\u8a8d\u5b8c\u6574\u8cbc\u4e0a</span>'; document.getElementById('sync-recv-actions').classList.add('d-none'); }
+  }catch(e){ console.error(e); saveSyncLog('import','fail','代碼無效'); document.getElementById('sync-recv-preview').innerHTML='<span style="color:var(--danger-fg)">❌ 代碼無效，請確認完整貼上</span>'; document.getElementById('sync-recv-actions').classList.add('d-none'); }
 }
-function cancelSyncPreview(){ pendingSyncData=null; document.getElementById('sync-recv-preview').innerHTML='\uff08\u5df2\u53d6\u6d88\u9810\u89bd\uff09'; document.getElementById('sync-recv-actions').classList.add('d-none'); var inp=document.getElementById('sync-code-input'); if(inp) inp.value=''; }
+function cancelSyncPreview(){ pendingSyncData=null; document.getElementById('sync-recv-preview').innerHTML='（已取消預覽）'; document.getElementById('sync-recv-actions').classList.add('d-none'); var inp=document.getElementById('sync-code-input'); if(inp) inp.value=''; }
 function confirmSync(btn){
   if(!pendingSyncData) return;
   var backup={expenses:expenses,favorites:favorites,packingTemplate:JSON.parse(localStorage.getItem(PACK_TEMPLATE_KEY)||'[]'),packingTrip:JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]'),tripData:JSON.parse(localStorage.getItem('tripData')||'null')};
@@ -1424,7 +1439,7 @@ function confirmSync(btn){
   if(typeof renderTopMarked==='function') renderTopMarked();
   if(typeof renderPackList==='function') renderPackList();
   if(typeof render==='function') render();
-  var s=''; if(useIt) s+='\u884c\u7a0b '; if(useExp) s+='\u8a18\u5e33 '+expenses.length+'\u7b46 '; if(usePack){ var pct=JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]'); s+='\u884c\u674e '+pct.length+'\u9805 '; } if(useFav) s+='\u6536\u85cf '+favorites.length+'\u9805';
+  var s=''; if(useIt){ var itd=loadTripData(); var itc=0; itd.days.forEach(function(d){d.sections.forEach(function(sc){itc+=sc.items.length;});}); s+='行程 '+itc+'項 '; } if(useExp) s+='記帳 '+expenses.length+'筆 '; if(usePack){ var pct=JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]'); s+='行李 '+pct.length+'類 '; } if(useFav) s+='收藏 '+favorites.length+'項';
   saveSyncLog('import','success',s.trim()); updateLocalSummary();
   var undoBtn=document.getElementById('sync-undo-btn'); if(undoBtn) undoBtn.disabled=false;
   if(btn){ btn.classList.add('is-success'); btn.disabled=true; setTimeout(function(){ btn.classList.remove('is-success'); btn.disabled=false; },1500); }
@@ -1437,38 +1452,38 @@ function updateLocalSummary(){
   var pc=JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]');
   var td=loadTripData(); var dc=(td.days||[]).reduce(function(n,d){ return n+(d.sections||[]).reduce(function(m,s){ return m+(s.items||[]).length; },0); },0);
   var el=document.getElementById('sync-local-summary'); if(!el) return;
-  el.innerText='\u672c\u6a5f\u8cc7\u6599\uff1a\u884c\u7a0b '+dc+'\u9805\uff5c\u8a18\u5e33 '+exp.length+'\uff5c\u884c\u674e '+pc.length+'\uff5c\u6536\u85cf '+fav.length;
+  el.innerText='本機資料：行程 '+dc+'項｜記帳 '+exp.length+'筆｜行李 '+pc.length+'分類｜收藏 '+fav.length+'項';
 }
 function renderSyncLogs(){
   var logs=getSyncLogs(); var container=document.getElementById('sync-log-list'); if(!container) return;
-  if(!logs.length){ container.innerHTML='\u5c1a\u7121\u540c\u6b65\u7d00\u9304'; return; }
-  container.innerHTML=logs.map(function(log){ var t=new Date(log.time); return '<div class="mb-2"><div>'+(log.status==='success'?'\u2714':'\u2716')+' '+t.toLocaleString()+'</div><div class="small text-muted ms-3">'+(log.type==='import'?'\u5320\u5165':'\u5320\u51fa')+' '+log.summary+'</div></div>'; }).join('');
+  if(!logs.length){ container.innerHTML='尚無同步紀錄'; return; }
+  container.innerHTML=logs.map(function(log){ var t=new Date(log.time); return '<div class="mb-2"><div>'+(log.status==='success'?'✔':'✖')+' '+t.toLocaleString()+'</div><div class="small text-muted ms-3">'+(log.type==='import'?'匯入':'匯出')+' '+log.summary+'</div></div>'; }).join('');
 }
 function updateLastSyncStatus(){
   var logs=getSyncLogs(); if(!logs.length) return;
   var latest=logs[0]; var t=new Date(latest.time);
   var timeEl=document.getElementById('sync-last-time'),statusEl=document.getElementById('sync-last-status');
   if(!timeEl||!statusEl) return;
-  timeEl.innerText=t.toLocaleString(); statusEl.innerText=latest.status==='success'?('\u2714 '+(latest.type==='import'?'\u5320\u5165\u6210\u529f':'\u5320\u51fa\u6210\u529f')):'\u2716 \u540c\u6b65\u5931\u6557';
+  timeEl.innerText=t.toLocaleString(); statusEl.innerText=latest.status==='success'?('✔ '+(latest.type==='import'?'匯入成功':'匯出成功')):'✖ 同步失敗';
 }
 function undoSync(){
   var raw=localStorage.getItem('trip_sync_backup'); if(!raw) return;
-  if(!confirm('\u78ba\u5b9a\u8981\u5fa9\u539f\u5230\u540c\u6b65\u524d\u7684\u7248\u672c\u55ce\uff1f')) return;
+  if(!confirm('確定要復原到同步前的版本嗎？')) return;
   var b=JSON.parse(raw); expenses=b.expenses||[]; favorites=b.favorites||[];
   localStorage.setItem('trip_v2026',JSON.stringify(expenses)); localStorage.setItem('trip_favorites',JSON.stringify(favorites));
   localStorage.setItem(PACK_TEMPLATE_KEY,JSON.stringify(b.packingTemplate||[])); localStorage.setItem(PACK_TRIP_KEY,JSON.stringify(b.packingTrip||[]));
   if(b.tripData) localStorage.setItem('tripData',JSON.stringify(b.tripData));
   initPacking(); if(typeof renderFavorites==='function') renderFavorites(); if(typeof renderPackList==='function') renderPackList(); if(typeof render==='function') render();
-  saveSyncLog('import','success','\u5fa9\u539f\u4e0a\u4e00\u7248'); updateLocalSummary();
+  saveSyncLog('import','success','復原上一版'); updateLocalSummary();
   var undoBtn=document.getElementById('sync-undo-btn'); if(undoBtn){ undoBtn.classList.add('is-success'); undoBtn.disabled=true; setTimeout(function(){ undoBtn.classList.remove('is-success'); undoBtn.disabled=false; },1500); }
   localStorage.removeItem('trip_sync_backup');
 }
-function pasteSyncCode(wEl){ navigator.clipboard.readText().then(function(t){ var inp=document.getElementById('sync-code-input'); if(inp) inp.value=t; wEl.classList.add('is-success'); setTimeout(function(){ wEl.classList.remove('is-success'); },900); }).catch(function(){ alert('\u7121\u6cd5\u8b80\u53d6\u526a\u8cbc\u7c3f\uff0c\u8acb\u624b\u52d5\u8cbc\u4e0a'); }); }
+function pasteSyncCode(wEl){ navigator.clipboard.readText().then(function(t){ var inp=document.getElementById('sync-code-input'); if(inp) inp.value=t; wEl.classList.add('is-success'); setTimeout(function(){ wEl.classList.remove('is-success'); },900); }).catch(function(){ alert('無法讀取剪貼簿，請手動貼上'); }); }
 
 // ===== 收藏 =====
 var favorites=JSON.parse(localStorage.getItem('trip_favorites')||'[]');
 function saveFavorites(){ localStorage.setItem('trip_favorites',JSON.stringify(favorites)); }
-function createFavorite(o){ return {id:Date.now(),title:o.title,category:o.category||'\u5099\u6848',note:'',items:[],createdAt:new Date().toISOString()}; }
+function createFavorite(o){ return {id:Date.now(),title:o.title,category:o.category||'備案',note:'',items:[],createdAt:new Date().toISOString()}; }
 function createItem(o){ return {id:Date.now(),name:o.name,links:o.links||[],note:o.note||'',tempMark:false}; }
 var topMarksExpanded=false; var TOPMARK_COLLAPSE_LIMIT=6;
 function renderTopMarked(){
@@ -1483,7 +1498,7 @@ function renderTopMarked(){
     var place=document.createElement('span'); place.className='topmark-place'; place.innerText=r.item.name;
     info.appendChild(title); info.appendChild(place);
     var rawLinks=Array.isArray(r.item.links)?r.item.links:[];
-    var links=rawLinks.map(function(l){ return typeof l==='object'&&l?{name:l.name||'\u9023\u7d50',url:l.url||''}:{name:'\u9023\u7d50',url:String(l||'')}; }).filter(function(l){ return l.url&&l.url.trim(); });
+    var links=rawLinks.map(function(l){ return typeof l==='object'&&l?{name:l.name||'連結',url:l.url||''}:{name:'連結',url:String(l||'')}; }).filter(function(l){ return l.url&&l.url.trim(); });
     if(links.length>0){
       var ld=document.createElement('div'); ld.className='topmark-links';
       links.slice(0,2).forEach(function(l){ var a=document.createElement('a'); a.className='item-link'; a.href=l.url; a.target='_blank'; a.rel='noopener'; a.innerText=l.name; ld.appendChild(a); });
@@ -1494,7 +1509,7 @@ function renderTopMarked(){
     var xBtn=document.createElement('button'); xBtn.className='topmark-x'; xBtn.type='button'; xBtn.innerText='\xd7'; xBtn.onclick=function(e){ e.stopPropagation(); r.item.tempMark=false; saveFavorites(); renderFavorites(); renderTopMarked(); };
     row.onclick=function(){ jumpToFavoriteItem(r.fav.id,r.item.id); }; row.appendChild(info); row.appendChild(xBtn); tc.appendChild(row);
   });
-  if(needC){ var tr=document.createElement('div'); tr.className='topmark-toggle-row'; var tb=document.createElement('button'); tb.className='topmark-toggle-btn'; tb.innerText=topMarksExpanded?'\u6536\u5408':'\u986f\u793a\u66f4\u591a (+'+(rows.length-TOPMARK_COLLAPSE_LIMIT)+')'; tb.onclick=function(e){ e.stopPropagation(); topMarksExpanded=!topMarksExpanded; renderTopMarked(); }; tr.appendChild(tb); tc.appendChild(tr); }
+  if(needC){ var tr=document.createElement('div'); tr.className='topmark-toggle-row'; var tb=document.createElement('button'); tb.className='topmark-toggle-btn'; tb.innerText=topMarksExpanded?'收合':'顯示更多 (+'+(rows.length-TOPMARK_COLLAPSE_LIMIT)+')'; tb.onclick=function(e){ e.stopPropagation(); topMarksExpanded=!topMarksExpanded; renderTopMarked(); }; tr.appendChild(tb); tc.appendChild(tr); }
 }
 function jumpToFavoriteItem(favId,itemId){
   var favTab=document.getElementById('favorites'); if(favTab&&!favTab.classList.contains('active')){ var navEl=document.querySelector('.nav-item[onclick*="favorites"]'); if(navEl) switchTab('favorites',navEl); }
@@ -1509,19 +1524,19 @@ function renderFavorites(){
   var container=document.getElementById('fav-list-container');
   var openIds=Array.from(container.querySelectorAll('.card-custom.open')).map(function(c){ return c.dataset.id; });
   container.innerHTML='';
-  if(!favorites.length){ container.innerHTML='<div class="text-center text-muted py-3">\u5c1a\u7121\u6536\u85cf\u9805\u76ee</div>'; return; }
+  if(!favorites.length){ container.innerHTML='<div class="text-center text-muted py-3">尚無收藏項目</div>'; return; }
   favorites.forEach(function(fav){
     var card=document.createElement('div'); card.className='card-custom mb-2 p-2 border'; card.dataset.id=String(fav.id);
     var header=document.createElement('div'); header.className='d-flex justify-content-between align-items-center';
     var tc=document.createElement('div'); tc.className='d-flex align-items-center gap-1'; tc.style.cursor='pointer';
     var tt=document.createElement('span'); tt.className='fav-title-text'; tt.innerText=fav.title; tc.appendChild(tt);
     var cb=document.createElement('span'); cb.className='fav-title-badge'; cb.innerText=fav.category; tc.appendChild(cb);
-    var tg=document.createElement('span'); tg.innerText='\u25be'; tg.className='toggle-icon'; tg.style.transition='transform .3s'; tc.appendChild(tg);
+    var tg=document.createElement('span'); tg.innerText='▾'; tg.className='toggle-icon'; tg.style.transition='transform .3s'; tc.appendChild(tg);
     tc.onclick=function(){ var isOpen=card.classList.toggle('open'); tg.style.transform=isOpen?'rotate(180deg)':'rotate(0deg)'; };
     var bg=document.createElement('div'); bg.className='d-flex align-items-center gap-1 fav-btn-group';
-    var addBtn=document.createElement('button'); addBtn.className='btn btn-sm btn-icon-mini fav-add-icon'; addBtn.innerHTML='<i class="fas fa-plus"></i>'; addBtn.title='\u65b0\u589e\u5730\u9ede'; addBtn.onclick=function(e){ e.stopPropagation(); addItemPrompt(fav.id); }; bg.appendChild(addBtn);
-    var editBtn=document.createElement('button'); editBtn.className='btn btn-sm btn-icon-mini'; editBtn.innerHTML='<i class="fas fa-pen"></i>'; editBtn.onclick=function(e){ e.stopPropagation(); var nt=prompt('\u7de8\u8f2f\u6a19\u984c',fav.title); var nc=prompt('\u7de8\u8f2f\u5206\u985e',fav.category); if(nt) fav.title=nt; if(nc) fav.category=nc; saveFavorites(); renderFavorites(); }; bg.appendChild(editBtn);
-    var delBtn=document.createElement('button'); delBtn.className='btn btn-sm btn-icon-mini text-danger'; delBtn.innerHTML='<i class="fas fa-trash-alt"></i>'; delBtn.onclick=function(e){ e.stopPropagation(); if(confirm('\u78ba\u5b9a\u522a\u9664\u6b64\u5927\u9805\uff1f')) removeFavorite(fav.id); }; bg.appendChild(delBtn);
+    var addBtn=document.createElement('button'); addBtn.className='btn btn-sm btn-icon-mini fav-add-icon'; addBtn.innerHTML='<i class="fas fa-plus"></i>'; addBtn.title='新增地點'; addBtn.onclick=function(e){ e.stopPropagation(); addItemPrompt(fav.id); }; bg.appendChild(addBtn);
+    var editBtn=document.createElement('button'); editBtn.className='btn btn-sm btn-icon-mini'; editBtn.innerHTML='<i class="fas fa-pen"></i>'; editBtn.onclick=function(e){ e.stopPropagation(); var nt=prompt('編輯標題',fav.title); var nc=prompt('編輯分類',fav.category); if(nt) fav.title=nt; if(nc) fav.category=nc; saveFavorites(); renderFavorites(); }; bg.appendChild(editBtn);
+    var delBtn=document.createElement('button'); delBtn.className='btn btn-sm btn-icon-mini text-danger'; delBtn.innerHTML='<i class="fas fa-trash-alt"></i>'; delBtn.onclick=function(e){ e.stopPropagation(); if(confirm('確定刪除此大項？')) removeFavorite(fav.id); }; bg.appendChild(delBtn);
     header.appendChild(tc); header.appendChild(bg); card.appendChild(header);
     var itemList=document.createElement('div'); itemList.className='item-list mt-2';
     fav.items.forEach(function(item){
@@ -1530,12 +1545,12 @@ function renderFavorites(){
       var nameSpan=document.createElement('span'); nameSpan.innerText=item.name; nameSpan.style.margin='0 8px';
       var editItemBtn=document.createElement('button'); editItemBtn.className='btn btn-sm btn-icon-mini'; editItemBtn.innerHTML='<i class="fas fa-pen"></i>';
       editItemBtn.onclick=function(){
-        var nn=prompt('\u7de8\u8f2f\u5730\u9ede\u540d\u7a31',item.name);
-        var cls=item.links.map(function(l){ return typeof l==='object'?l.name+'\uff1a'+l.url:l; }).join(' | ');
-        var nlr=prompt('\u7de8\u8f2f\u9023\u7d50 (\u683c\u5f0f\uff1a\u540d\u7a31\uff1a\u7db2\u5740\uff0c\u591a\u7d44\u7528\u7a7a\u683c | \u5206\u9694)',cls);
-        var nn2=prompt('\u7de8\u8f2f\u5099\u8a3b',item.note);
+        var nn=prompt('編輯地點名稱',item.name);
+        var cls=item.links.map(function(l){ return typeof l==='object'?l.name+'：'+l.url:l; }).join(' | ');
+        var nlr=prompt('編輯連結 (格式：名稱：網址，多組用空格 | 分隔)',cls);
+        var nn2=prompt('編輯備註',item.note);
         if(nn) item.name=nn;
-        if(nlr!==null){ item.links=nlr.split(/[\s,|]+/).filter(function(s){ return s.trim(); }).map(function(p){ if(p.includes('\uff1a')){ var pp=p.split('\uff1a'); return {name:pp[0].trim(),url:pp.slice(1).join('\uff1a').trim()}; } return {name:'\u9023\u7d50',url:p.trim()}; }); }
+        if(nlr!==null){ item.links=nlr.split(/[\s,|]+/).filter(function(s){ return s.trim(); }).map(function(p){ if(p.includes('：')){ var pp=p.split('：'); return {name:pp[0].trim(),url:pp.slice(1).join('：').trim()}; } return {name:'連結',url:p.trim()}; }); }
         if(nn2!==null) item.note=nn2;
         saveFavorites(); renderFavorites();
       };
@@ -1544,7 +1559,7 @@ function renderFavorites(){
       var left=document.createElement('div'); left.appendChild(markBtn); left.appendChild(nameSpan);
       var right=document.createElement('div'); right.appendChild(editItemBtn); right.appendChild(removeItemBtn);
       topRow.appendChild(left); topRow.appendChild(right); itemDiv.appendChild(topRow);
-      if(item.links&&item.links.length>0){ var ld=document.createElement('div'); ld.className='d-flex flex-wrap mt-1'; ld.innerHTML=item.links.map(function(l){ var ln=typeof l==='object'&&l?l.name:'\u9023\u7d50'; var lu=typeof l==='object'&&l?l.url:l; return '<a href="'+lu+'" target="_blank" class="item-link">'+ln+'</a>'; }).join(''); itemDiv.appendChild(ld); }
+      if(item.links&&item.links.length>0){ var ld=document.createElement('div'); ld.className='d-flex flex-wrap mt-1'; ld.innerHTML=item.links.map(function(l){ var ln=typeof l==='object'&&l?l.name:'連結'; var lu=typeof l==='object'&&l?l.url:l; return '<a href="'+lu+'" target="_blank" class="item-link">'+ln+'</a>'; }).join(''); itemDiv.appendChild(ld); }
       if(item.note){ var nd=document.createElement('div'); nd.className='small text-muted'; nd.innerText=item.note; itemDiv.appendChild(nd); }
       itemList.appendChild(itemDiv);
     });
@@ -1554,8 +1569,8 @@ function renderFavorites(){
   });
   renderTopMarked();
 }
-function addFavoritePrompt(){ var title=prompt('\u8f38\u5165\u6536\u85cf\u5927\u6a19\u984c'); if(!title) return; var cat=prompt('\u5206\u985e\u6a19\u7c64(\u53ef\u7a7a\u767d, \u4f8b\u5982\u96e8\u5099)')||'\u5099\u6848'; favorites.push(createFavorite({title:title,category:cat})); saveFavorites(); renderFavorites(); }
-function addItemPrompt(favId){ var fav=favorites.find(function(f){ return f.id===favId; }); if(!fav) return; var name=prompt('\u5730\u9ede\u540d\u7a31 (\u5fc5\u586b)'); if(!name) return; var lr=prompt('\u9023\u7d50 (\u683c\u5f0f\uff1a\u540d\u7a31\uff1a\u7db2\u5740\uff0c\u591a\u7d44\u7528\u7a7a\u683c | \u5206\u9694)')||''; var links=lr.split(/\s+/).filter(function(s){ return s.trim(); }).map(function(s){ var ci=s.indexOf('\uff1a'); if(ci!==-1&&!s.startsWith('http')){ return {name:s.substring(0,ci).trim(),url:s.substring(ci+1).trim()}; } return {name:'\u9023\u7d50',url:s.trim()}; }).filter(function(l){ return l.url; }); var note=prompt('\u5099\u8a3b (\u53ef\u7a7a\u767d)')||''; fav.items.push(createItem({name:name,links:links,note:note})); saveFavorites(); renderFavorites(); }
+function addFavoritePrompt(){ var title=prompt('輸入收藏大標題'); if(!title) return; var cat=prompt('分類標籤(可空白, 例如雨備)')||'備案'; favorites.push(createFavorite({title:title,category:cat})); saveFavorites(); renderFavorites(); }
+function addItemPrompt(favId){ var fav=favorites.find(function(f){ return f.id===favId; }); if(!fav) return; var name=prompt('地點名稱 (必填)'); if(!name) return; var lr=prompt('連結 (格式：名稱：網址，多組用空格 | 分隔)')||''; var links=lr.split(/\s+/).filter(function(s){ return s.trim(); }).map(function(s){ var ci=s.indexOf('：'); if(ci!==-1&&!s.startsWith('http')){ return {name:s.substring(0,ci).trim(),url:s.substring(ci+1).trim()}; } return {name:'連結',url:s.trim()}; }).filter(function(l){ return l.url; }); var note=prompt('備註 (可空白)')||''; fav.items.push(createItem({name:name,links:links,note:note})); saveFavorites(); renderFavorites(); }
 function removeFavorite(id){ favorites=favorites.filter(function(f){ return f.id!==id; }); saveFavorites(); renderFavorites(); }
 renderFavorites();
 
@@ -1602,13 +1617,13 @@ document.addEventListener('blur',function(e){
 },true);
 
 function addItem(dayIndex,sectionIndex){
-  var data=loadTripData(); if(!data.days[dayIndex].sections[sectionIndex]) data.days[dayIndex].sections.push({title:'\u884c\u7a0b',items:[]});
-  data.days[dayIndex].sections[sectionIndex].items.push({id:'item'+Date.now(),time:'',title:'\u65b0\u884c\u7a0b',note:'',detailKey:null});
+  var data=loadTripData(); if(!data.days[dayIndex].sections[sectionIndex]) data.days[dayIndex].sections.push({title:'行程',items:[]});
+  data.days[dayIndex].sections[sectionIndex].items.push({id:'item'+Date.now(),time:'',title:'新行程',note:'',detailKey:null});
   localStorage.setItem('tripData',JSON.stringify(data)); renderTimeline();
 }
-function addSection(dayIndex){ var data=loadTripData(); data.days[dayIndex].sections.push({title:'\u65b0\u5340\u6bb5',items:[]}); localStorage.setItem('tripData',JSON.stringify(data)); renderTimeline(); }
+function addSection(dayIndex){ var data=loadTripData(); data.days[dayIndex].sections.push({title:'新區段',items:[]}); localStorage.setItem('tripData',JSON.stringify(data)); renderTimeline(); }
 function renameSection(dayIndex,sectionIndex,newTitle){ var data=loadTripData(); data.days[dayIndex].sections[sectionIndex].title=newTitle; localStorage.setItem('tripData',JSON.stringify(data)); }
-function deleteSection(dayIndex,sectionIndex){ if(!confirm('\u522a\u9664\u9019\u500b\u5340\u6bb5?')) return; var data=loadTripData(); data.days[dayIndex].sections.splice(sectionIndex,1); localStorage.setItem('tripData',JSON.stringify(data)); renderTimeline(); }
+function deleteSection(dayIndex,sectionIndex){ if(!confirm('刪除這個區段?')) return; var data=loadTripData(); data.days[dayIndex].sections.splice(sectionIndex,1); localStorage.setItem('tripData',JSON.stringify(data)); renderTimeline(); }
 
 
 function escapeHtml(s){
@@ -1622,19 +1637,19 @@ function loadTripData(){
   var td;
   if(!raw){
     td={meta:{},days:[],details:{}};
-    for(var i=0;i<19;i++) td.days.push({sections:[{title:'\u884c\u7a0b',items:[]}]});
+    for(var i=0;i<19;i++) td.days.push({sections:[{title:'行程',items:[]}]});
     localStorage.setItem('tripData',JSON.stringify(td));
     return td;
   }
   td=JSON.parse(raw);
   if(!td.details) td.details={};
-  while(td.days.length<19) td.days.push({sections:[{title:'\u884c\u7a0b',items:[]}]});
+  while(td.days.length<19) td.days.push({sections:[{title:'行程',items:[]}]});
   return td;
 }
 
 function buildDetailBody(data){
   if(!Array.isArray(data.blocks)||!data.blocks.length)
-    return '<div class="detail-block"><div class="detail-note">\u5c1a\u672a\u5efa\u7acb\u8a73\u60c5\u3002</div></div>';
+    return '<div class="detail-block"><div class="detail-note">尚未建立詳情。</div></div>';
   return data.blocks.map(function(b){
     if(b.type==='list') return '<div class="detail-block"><h6>'+escapeHtml(b.title||'')+'</h6><ul>'+(b.items||[]).map(function(i){return '<li>'+escapeHtml(i.text||'')+'</li>';}).join('')+'</ul></div>';
     if(b.type==='info') return '<div class="detail-block"><h6>'+escapeHtml(b.title||'')+'</h6>'+(b.items||[]).map(function(i){return '<div class="detail-row"><div class="k">'+escapeHtml(i.label||'')+'</div><div class="v">'+escapeHtml(i.value||'')+'</div></div>';}).join('')+'</div>';
@@ -1676,7 +1691,7 @@ function updateDetailHeader(field,value){
 var blockSortable=null, rowSortables=[];
 function renderDetailEditor(){
   var body=document.getElementById('detailBody'); if(!body) return;
-  body.innerHTML='<div class="detail-editor"><div id="detailBlocks"></div><div style="margin-top:8px"><select id="blockType"><option value="info">Info</option><option value="list">List</option><option value="links">Links</option></select><button id="addBlockBtn" style="margin-left:4px">+ \u65b0\u589e\u5340\u584a</button></div></div>';
+  body.innerHTML='<div class="detail-editor"><div id="detailBlocks"></div><div style="margin-top:8px"><select id="blockType"><option value="info">Info</option><option value="list">List</option><option value="links">Links</option></select><button id="addBlockBtn" style="margin-left:4px">+ 新增區塊</button></div></div>';
   document.getElementById('addBlockBtn').onclick=function(){
     var t=loadTripData(); if(!t.details) t.details={};
     if(!t.details[currentDetailKey]) t.details[currentDetailKey]={title:'',sub:'',blocks:[]};
@@ -1763,12 +1778,12 @@ function renderTimeline(){
 }
 
 function renderItem(item){
-  var toggleIcon=item.note?'<span class="toggle-icon">\u25be</span>':'';
+  var toggleIcon=item.note?'<span class="toggle-icon">▾</span>':'';
   var detailAttr=item.detailKey?' data-detail="'+item.detailKey+'"':'';
-  var detailDot=item.detailKey?'<span class="detail-dot" data-detail="'+item.detailKey+'">\u00b7</span>':'';
+  var detailDot=item.detailKey?'<span class="detail-dot" data-detail="'+item.detailKey+'">·</span>':'';
   var noteHtml=item.note?'<div class="time-detail">'+item.note+'</div>':'';
   var checkedAttr=item.detailKey?' checked':'';
-  var editorHtml=(timelineEditMode&&editingItemId===item.id)?'<div class="item-editor"><textarea placeholder="\u5099\u8a3b..." onchange="updateItemNote(\''+item.id+'\',this.value)">'+(item.note||'')+'</textarea><label><input type="checkbox"'+checkedAttr+' onchange="toggleItemDetail(\''+item.id+'\',this.checked)"> \u6709\u8a73\u7d30\u8cc7\u8a0a\uff08\u00b7 \u5716\u793a\uff09</label></div>':'';
+  var editorHtml=(timelineEditMode&&editingItemId===item.id)?'<div class="item-editor"><textarea placeholder="備註..." onchange="updateItemNote(\''+item.id+'\',this.value)">'+(item.note||'')+'</textarea><label><input type="checkbox"'+checkedAttr+' onchange="toggleItemDetail(\''+item.id+'\',this.checked)"> 有詳細資訊（· 圖示）</label></div>':'';
   var headerContent='<div class="item-row">'
     +'<div class="item-handle"><i class="fas fa-grip-lines" style="font-size:.72rem"></i></div>'
     +'<div class="item-content">'
@@ -1777,8 +1792,8 @@ function renderItem(item){
     +'<span class="title-text" data-id="'+item.id+'" contenteditable="'+timelineEditMode+'">'+(item.title||'')+'</span>'
     +toggleIcon
     +'</div>'
-    +'<button class="item-edit" onclick="toggleItemEditor(\''+item.id+'\')" title="\u5099\u8a3b"><i class="fas fa-pen" style="font-size:.72rem"></i></button>'
-    +'<button class="item-delete" onclick="if(confirm(\'\u522a\u9664\u9019\u500b\u884c\u7a0b?\')) deleteItem(\''+item.id+'\')" title="\u522a\u9664"><i class="fas fa-trash-alt" style="font-size:.72rem"></i></button>'
+    +'<button class="item-edit" onclick="toggleItemEditor(\''+item.id+'\')" title="備註"><i class="fas fa-pen" style="font-size:.72rem"></i></button>'
+    +'<button class="item-delete" onclick="if(confirm(\'刪除這個行程?\')) deleteItem(\''+item.id+'\')" title="刪除"><i class="fas fa-trash-alt" style="font-size:.72rem"></i></button>'
     +'</div>';
   return '<div class="time-item" data-id="'+item.id+'"'+detailAttr+'>'
     +'<div class="time-node"></div>'
@@ -1846,7 +1861,7 @@ function openDetailCard(key){
 function renderDetail(){ if(detailEditMode) renderDetailEditor(); }
 function updateDetailHeader(field,value){ var trip=loadTripData(); if(!trip.details) trip.details={}; if(!trip.details[currentDetailKey]) trip.details[currentDetailKey]={title:'',sub:'',blocks:[]}; trip.details[currentDetailKey][field]=value; localStorage.setItem('tripData',JSON.stringify(trip)); }
 function buildDetailBody(data){
-  if(!Array.isArray(data.blocks)||!data.blocks.length) return '<div class="detail-block"><div class="detail-note">\u5c1a\u672a\u5efa\u7acb\u8a73\u60c5\u3002</div></div>';
+  if(!Array.isArray(data.blocks)||!data.blocks.length) return '<div class="detail-block"><div class="detail-note">尚未建立詳情。</div></div>';
   return data.blocks.map(function(block){
     if(block.type==='list') return '<div class="detail-block"><h6>'+escapeHtml(block.title||'')+'</h6><ul>'+block.items.map(function(i){ return '<li>'+escapeHtml(i.text||'')+'</li>'; }).join('')+'</ul></div>';
     if(block.type==='info') return '<div class="detail-block"><h6>'+escapeHtml(block.title||'')+'</h6>'+block.items.map(function(i){ return '<div class="detail-row"><div class="k">'+escapeHtml(i.label||'')+'</div><div class="v">'+escapeHtml(i.value||'')+'</div></div>'; }).join('')+'</div>';
@@ -1856,7 +1871,7 @@ function buildDetailBody(data){
 }
 function renderDetailEditor(){
   var trip=loadTripData(); var body=document.getElementById('detailBody'); if(!body) return;
-  body.innerHTML='<div class="detail-editor"><div id="detailBlocks"></div><div class="add-block-bar"><select id="blockType"><option value="info">Info\uff08Key-Value\uff09</option><option value="list">List\uff08\u6e05\u55ae\uff09</option><option value="links">Links\uff08\u9023\u7d50\uff09</option></select><button class="btn-add-block" id="addBlockBtn"><i class="fas fa-plus" style="font-size:.7rem"></i> \u65b0\u589e\u5340\u584a</button></div></div>';
+  body.innerHTML='<div class="detail-editor"><div id="detailBlocks"></div><div class="add-block-bar"><select id="blockType"><option value="info">Info（Key-Value）</option><option value="list">List（清單）</option><option value="links">Links（連結）</option></select><button class="btn-add-block" id="addBlockBtn"><i class="fas fa-plus" style="font-size:.7rem"></i> 新增區塊</button></div></div>';
   document.getElementById('addBlockBtn').onclick=function(){ var trip=loadTripData(); if(!trip.details) trip.details={}; if(!trip.details[currentDetailKey]) trip.details[currentDetailKey]={title:'',sub:'',blocks:[]}; var type=document.getElementById('blockType').value; var map={info:{type:'info',title:'INFO',items:[{label:'',value:''}]},list:{type:'list',title:'LIST',items:[{text:''}]},links:{type:'links',title:'LINKS',items:[{label:'',value:''}]}}; trip.details[currentDetailKey].blocks.push(map[type]); localStorage.setItem('tripData',JSON.stringify(trip)); renderEditorBlocks(); };
   renderEditorBlocks();
 }
@@ -1866,8 +1881,8 @@ function renderEditorBlocks(){
   container.innerHTML=blocks.map(function(block,i){
     var isList=block.type==='list',isInfo=block.type==='info',isLinks=block.type==='links';
     var rows=(block.items||[]).map(function(item,j){
-      if(isList) return '<div class="block-row-wrap"><span class="row-drag"><i class="fas fa-grip-lines" style="font-size:.7rem"></i></span><input value="'+escapeHtml(item.text||'')+'" placeholder="\u9805\u76ee\u5167\u5bb9" style="flex:1" onchange="updateBlockText('+i+','+j+',this.value)"><button class="btn-row-del" onclick="deleteBlockRow('+i+','+j+')"><i class="fas fa-times"></i></button></div>';
-      return '<div class="block-row-wrap"><span class="row-drag"><i class="fas fa-grip-lines" style="font-size:.7rem"></i></span><input value="'+escapeHtml(item.label||'')+'" placeholder="'+(isInfo?'\u6a19\u984c':'\u540d\u7a31')+'" style="flex:1" onchange="updateBlockLabel('+i+','+j+',this.value)"><input value="'+escapeHtml(item.value||'')+'" placeholder="'+(isInfo?'\u5167\u5bb9':'URL')+'" style="flex:2" onchange="updateBlockValue('+i+','+j+',this.value)"><button class="btn-row-del" onclick="deleteBlockRow('+i+','+j+')"><i class="fas fa-times"></i></button></div>';
+      if(isList) return '<div class="block-row-wrap"><span class="row-drag"><i class="fas fa-grip-lines" style="font-size:.7rem"></i></span><input value="'+escapeHtml(item.text||'')+'" placeholder="項目內容" style="flex:1" onchange="updateBlockText('+i+','+j+',this.value)"><button class="btn-row-del" onclick="deleteBlockRow('+i+','+j+')"><i class="fas fa-times"></i></button></div>';
+      return '<div class="block-row-wrap"><span class="row-drag"><i class="fas fa-grip-lines" style="font-size:.7rem"></i></span><input value="'+escapeHtml(item.label||'')+'" placeholder="'+(isInfo?'標題':'名稱')+'" style="flex:1" onchange="updateBlockLabel('+i+','+j+',this.value)"><input value="'+escapeHtml(item.value||'')+'" placeholder="'+(isInfo?'內容':'URL')+'" style="flex:2" onchange="updateBlockValue('+i+','+j+',this.value)"><button class="btn-row-del" onclick="deleteBlockRow('+i+','+j+')"><i class="fas fa-times"></i></button></div>';
     }).join('');
     var tl={info:'Info',list:'List',links:'Links'}[block.type]||block.type;
     return '<div class="detail-block" style="margin-top:10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span class="block-drag"><i class="fas fa-grip-vertical" style="font-size:.75rem"></i></span><span style="font-size:.68rem;color:var(--text-3);font-weight:700;letter-spacing:.5px;padding:0 4px">'+tl+'</span><input class="block-title-input" value="'+escapeHtml(block.title||'')+'" onchange="updateBlockTitle('+i+',this.value)"><button class="btn-block-add" onclick="addBlockRow('+i+')"><i class="fas fa-plus"></i></button><button class="btn-block-del" onclick="deleteBlock('+i+')"><i class="fas fa-trash-alt"></i></button></div><div class="block-rows">'+rows+'</div></div>';
