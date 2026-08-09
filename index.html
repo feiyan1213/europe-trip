@@ -1473,7 +1473,7 @@ function updateLocalSummary(){
   var pc=JSON.parse(localStorage.getItem(PACK_TRIP_KEY)||'[]');
   var td=loadTripData(); var dc=(td.days||[]).reduce(function(n,d){ return n+(d.sections||[]).reduce(function(m,s){ return m+(s.items||[]).length; },0); },0);
   var el=document.getElementById('sync-local-summary'); if(!el) return;
-  el.innerHTML='本機資料：<br>行程 '+dc+'項｜記帳 '+exp.length+'筆｜行李 '+pc.length+'分類｜收藏 '+fav.length+'項';
+  el.innerHTML='本機資料：<br>行程 '+dc+'項｜記帳 '+exp.length+'筆｜行李 '+pc.length+'類｜收藏 '+fav.length+'項';
 }
 function renderSyncLogs(){
   var logs=getSyncLogs(); var container=document.getElementById('sync-log-list'); if(!container) return;
