@@ -269,7 +269,7 @@ body:not(.edit-mode) .section-add,body:not(.edit-mode) .section-delete{ pointer-
 body:not(.edit-mode){ --section-icon:0px; --item-gap:0px; --item-icon:0px; }
 body.edit-mode{ --section-icon:28px; --item-gap:32px; --item-icon:28px; }
 .item-row{ display:grid; grid-template-columns:var(--item-gap) 1fr var(--item-icon) var(--item-icon); align-items:center; transition:all .3s ease; }
-.item-content{ display:flex; align-items:center; gap:6px; }
+.item-content{ display:flex; align-items:flex-start; gap:6px; }
 .item-handle{ opacity:0; cursor:grab; text-align:center; color:var(--text-3); font-size:.78rem; padding:2px 4px; border-radius:6px; transition:opacity .2s ease,background .15s ease; }
 body.edit-mode .item-handle{ opacity:1; }
 .item-handle:hover{ background:var(--pill-bg); color:var(--text-2); }
