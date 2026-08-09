@@ -268,8 +268,9 @@ body.edit-mode .section-delete{ opacity:1; transform:translateX(0); color:var(--
 body:not(.edit-mode) .section-add,body:not(.edit-mode) .section-delete{ pointer-events:none; }
 body:not(.edit-mode){ --section-icon:0px; --item-gap:0px; --item-icon:0px; }
 body.edit-mode{ --section-icon:28px; --item-gap:32px; --item-icon:28px; }
-.item-row{ display:grid; grid-template-columns:var(--item-gap) 1fr var(--item-icon) var(--item-icon); align-items:center; transition:all .3s ease; }
-.item-content{ display:flex; align-items:flex-start; gap:6px; }
+.item-row{ display:grid; grid-template-columns:var(--item-gap) 1fr 20px var(--item-icon) var(--item-icon); align-items:flex-start; flex:1; min-width:0; transition:all .3s ease; }
+.item-content{ display:flex; align-items:flex-start; gap:6px; min-width:0; }
+.toggle-col{ display:flex; align-items:flex-start; justify-content:center; padding-top:2px; }
 .item-handle{ opacity:0; cursor:grab; text-align:center; color:var(--text-3); font-size:.78rem; padding:2px 4px; border-radius:6px; transition:opacity .2s ease,background .15s ease; }
 body.edit-mode .item-handle{ opacity:1; }
 .item-handle:hover{ background:var(--pill-bg); color:var(--text-2); }
@@ -1855,8 +1856,8 @@ function renderItem(item){
     +'<span class="time-text" data-id="'+item.id+'">'+(item.time||'--:--')+'</span>'
     +'<input type="time" class="time-picker" data-id="'+item.id+'" value="'+(item.time||'')+'">'
     +'<span class="title-text" data-id="'+item.id+'" contenteditable="'+timelineEditMode+'">'+(item.title||'')+'</span>'
-    +toggleIcon
     +'</div>'
+    +'<div class="toggle-col">'+toggleIcon+'</div>'
     +'<button class="item-edit" onclick="toggleItemEditor(\''+item.id+'\')" title="備註"><i class="fas fa-pen" style="font-size:.72rem"></i></button>'
     +'<button class="item-delete" onclick="if(confirm(\'刪除這個行程?\')) deleteItem(\''+item.id+'\')" title="刪除"><i class="fas fa-trash-alt" style="font-size:.72rem"></i></button>'
     +'</div>';
