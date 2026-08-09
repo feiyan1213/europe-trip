@@ -567,7 +567,7 @@ a:not(.item-link):hover{ color:var(--brand); opacity:.9; }
 .detail-pill{ display:inline-flex; align-items:center; gap:6px; font-size:.78rem; font-weight:700; padding:6px 10px; border-radius:999px; border:1px solid var(--pill-bd); background:var(--pill-bg); color:var(--pill-fg-strong); text-decoration:none; transition:background .18s ease,border-color .18s ease,transform .12s ease; }
 .detail-pill:hover{ background:var(--pill-bg-hover); border-color:var(--pill-bd-strong); }
 .detail-pill:active{ transform:scale(.97); opacity:.95; }
-.detail-dot{ margin-left:auto; color:#888; cursor:pointer; font-size:18px; padding-left:10px; }
+.detail-dot{ margin-left:auto; color:#888; cursor:pointer; font-size:18px; padding-left:10px; width:18px; text-align:center; flex-shrink:0; }
 .detail-dot:hover{ color:#ddd; }
 
 /* ===== Misc ===== */
@@ -1846,7 +1846,7 @@ function renderTimeline(){
 function renderItem(item){
   var toggleIcon=item.note?'<span class="toggle-icon">▾</span>':'';
   var detailAttr=item.detailKey?' data-detail="'+item.detailKey+'"':'';
-  var detailDot=item.detailKey?'<span class="detail-dot" data-detail="'+item.detailKey+'">·</span>':'';
+  var detailDot='<span class="detail-dot" data-detail="'+(item.detailKey||'')+'">'+(item.detailKey?'·':'')+'</span>';
   var noteHtml=item.note?'<div class="time-detail">'+item.note+'</div>':'';
   var checkedAttr=item.detailKey?' checked':'';
   var editorHtml=(timelineEditMode&&editingItemId===item.id)?'<div class="item-editor"><textarea placeholder="備註..." onchange="updateItemNote(\''+item.id+'\',this.value)">'+(item.note||'')+'</textarea><label><input type="checkbox"'+checkedAttr+' onchange="toggleItemDetail(\''+item.id+'\',this.checked)"> 有詳細資訊（· 圖示）</label></div>':'';
