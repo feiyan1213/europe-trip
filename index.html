@@ -797,9 +797,11 @@ input,textarea{ font-size:.95rem; }
     <h6 class="fw-bold">緊急連絡</h6>
     <p class="small mb-2">外交部急難救助：+886-800-085-095</p>
     <hr>
-    <h6 class="fw-bold">常用連結</h6>
-    <div class="d-grid gap-2" id="quicklinks-container"></div>
-    <button type="button" class="btn btn-sm btn-secondary-soft w-100 mt-2" onclick="addQuickLinkPrompt()"><i class="fas fa-plus"></i> 新增連結</button>
+        <div class="d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold mb-0">常用連結</h6>
+      <button type="button" class="btn btn-sm btn-icon-mini" onclick="addQuickLinkPrompt()" title="新增連結"><i class="fas fa-plus"></i></button>
+    </div>
+    <div class="d-grid gap-2 mt-2" id="quicklinks-container"></div>
   </div>
   <div class="card-custom" id="sync-center">
     <div class="text-center mb-3"><h6 class="fw-bold mb-1">隊友同步中心</h6><small class="text-muted">同步行程、記帳、行李、收藏</small></div>
