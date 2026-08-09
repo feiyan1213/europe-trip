@@ -265,6 +265,7 @@ body.edit-mode .section-delete{ opacity:1; transform:translateX(0); color:var(--
 .section-add:hover{ background:var(--pill-bg) !important; }
 .section-delete:hover{ background:var(--danger-bg) !important; }
 .section-add:active,.section-delete:active{ transform:scale(.88) !important; }
+body:not(.edit-mode) .section-add,body:not(.edit-mode) .section-delete{ pointer-events:none; }
 body:not(.edit-mode){ --section-icon:0px; --item-gap:0px; --item-icon:0px; }
 body.edit-mode{ --section-icon:28px; --item-gap:32px; --item-icon:28px; }
 .item-row{ display:grid; grid-template-columns:var(--item-gap) 1fr var(--item-icon) var(--item-icon); align-items:center; transition:all .3s ease; }
@@ -273,6 +274,7 @@ body.edit-mode{ --section-icon:28px; --item-gap:32px; --item-icon:28px; }
 body.edit-mode .item-handle{ opacity:1; }
 .item-handle:hover{ background:var(--pill-bg); color:var(--text-2); }
 .item-handle:active{ cursor:grabbing; }
+body:not(.edit-mode) .item-handle{ pointer-events:none; }
 .item-edit,.item-delete{
   opacity:0; background:transparent !important; border:none !important;
   cursor:pointer; width:26px; height:26px;
@@ -285,6 +287,7 @@ body.edit-mode .item-delete{ opacity:1; color:var(--danger-fg); }
 .item-edit:hover{ background:var(--pill-bg) !important; color:var(--text-2); }
 .item-delete:hover{ background:var(--danger-bg) !important; }
 .item-edit:active,.item-delete:active{ transform:scale(.88); }
+body:not(.edit-mode) .item-edit,body:not(.edit-mode) .item-delete{ pointer-events:none; }
 .item-editor{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin-top:8px; }
 .item-editor textarea{ background:var(--surface) !important; border:1px solid var(--border) !important; border-radius:8px; color:var(--text-1) !important; font-size:.85rem; padding:6px 10px; width:100%; resize:vertical; min-height:56px; }
 .item-editor label{ font-size:.78rem; color:var(--text-2); display:flex; align-items:center; gap:6px; margin-top:6px; }
@@ -795,10 +798,8 @@ input,textarea{ font-size:.95rem; }
     <p class="small mb-2">外交部急難救助：+886-800-085-095</p>
     <hr>
     <h6 class="fw-bold">常用連結</h6>
-    <div class="d-grid gap-2">
-      <a href="https://www.sbb.ch/en" target="_blank" class="btn btn-sm btn-secondary-soft text-start">SBB 瑞士國鐵官網</a>
-      <a href="https://www.meteoswiss.admin.ch/" target="_blank" class="btn btn-sm btn-secondary-soft text-start">MeteoSwiss 瑞士天氣</a>
-    </div>
+    <div class="d-grid gap-2" id="quicklinks-container"></div>
+    <button type="button" class="btn btn-sm btn-secondary-soft w-100 mt-2" onclick="addQuickLinkPrompt()"><i class="fas fa-plus"></i> 新增連結</button>
   </div>
   <div class="card-custom" id="sync-center">
     <div class="text-center mb-3"><h6 class="fw-bold mb-1">隊友同步中心</h6><small class="text-muted">同步行程、記帳、行李、收藏</small></div>
@@ -858,6 +859,8 @@ input,textarea{ font-size:.95rem; }
           </span>
         </div>
       </div>
+      <input type="file" id="sync-file-input" accept=".txt" style="display:none" onchange="handleSyncFileImport(event)">
+      <button type="button" class="btn btn-sm btn-secondary-soft w-100 mb-2" onclick="document.getElementById('sync-file-input').click()"><i class="fas fa-file-import"></i> 匯入 TXT 檔案</button>
       <button class="btn btn-sm btn-secondary-soft w-100 mb-2" onclick="analyzeSyncContent()"><i class="fas fa-search"></i> 分析同步內容</button>
       <div class="small text-muted mb-2" id="sync-recv-preview">（分析後會顯示將更新內容）</div>
       <div id="sync-recv-actions" class="d-none mb-2">
@@ -1099,7 +1102,12 @@ function toMoney(n){ return Math.round(num(n)).toLocaleString(); }
 function fmtHHMM(ts){ if(!ts) return ''; var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function payIcon(p){ if(p==='cash') return 'fa-coins'; if(p==='mobile') return 'fa-mobile-screen-button'; if(p==='other') return 'fa-shapes'; return 'fa-credit-card'; }
 
-function onBudgetCurrencyChange(){ updateRateHintUI(); }
+function onBudgetCurrencyChange(){ updateRateHintUI(); updateManualRateLabel(); }
+function updateManualRateLabel(){
+  var curr=(document.getElementById('exp-curr')||{}).value||'CHF';
+  var lbl=document.getElementById('manualRateLabel');
+  if(lbl) lbl.innerHTML=curr+'&rarr;TWD';
+}
 function setPayMethod(pay,btnEl){
   currentPay=pay; localStorage.setItem('trip_budget_last_pay',pay);
   document.querySelectorAll('#budget .pay-pill').forEach(function(b){ b.classList.remove('active'); });
@@ -1254,7 +1262,7 @@ function toggleDayGroup(dayKey){
   localStorage.setItem('trip_budget_open_days',JSON.stringify(Array.from(openDaySet)));
   var el=document.querySelector('.day-group[data-day="'+dayKey+'"]'); if(el) el.classList.toggle('open');
 }
-function initBudgetPageIfNeeded(){ setPayMethod(currentPay,null); updateRateHintUI(); if(!lastRateFetchedAt) refreshRates(false); }
+function initBudgetPageIfNeeded(){ setPayMethod(currentPay,null); updateRateHintUI(); updateManualRateLabel(); if(!lastRateFetchedAt) refreshRates(false); }
 
 // ===== 行李 =====
 var PACK_TEMPLATE_KEY='trip_pack_template',PACK_TRIP_KEY='trip_pack_trip_current',PACK_VIEW_KEY='trip_pack_view',PACK_CARRY_KEY='trip_pack_carry_mode',PACK_CARRY_CHECK_KEY='trip_pack_carry_checked';
@@ -1310,6 +1318,19 @@ function addItemToCat(catIdx){
   var n=prompt('在「'+cat.category+'」新增項目：'); if(!n||!n.trim()) return;
   cat.items=cat.items||[]; cat.items.push({text:n.trim(),checked:false,carry:false}); saveActivePack(); renderPackList(); updateLocalSummary();
 }
+function renameCategoryPrompt(ci){
+  var active=getActivePackRef(); var c=active[ci]; if(!c) return;
+  var n=prompt('修改分類名稱：',c.category); if(!n||!n.trim()) return;
+  var newName=n.trim();
+  if(active.some(function(x){ return x!==c && x.category===newName; })){ alert('此類別已存在'); return; }
+  c.category=newName; saveActivePack(); renderPackList(); updateLocalSummary();
+}
+function editItemText(ci,ii){
+  var active=getActivePackRef(); var c=active[ci]; if(!c||!c.items||!c.items[ii]) return;
+  var it=c.items[ii];
+  var n=prompt('編輯項目文字：',it.text); if(!n||!n.trim()) return;
+  it.text=n.trim(); saveActivePack(); renderPackList(); updateLocalSummary();
+}
 function toggleItem(ci,ii){ var a=getActivePackRef(); var c=a[ci]; if(!c||!c.items||!c.items[ii]) return; c.items[ii].checked=!c.items[ii].checked; saveActivePack(); renderPackList(); }
 function deleteCategory(ci){ var a=getActivePackRef(); var c=a[ci]; if(!c) return; if(confirm('確定要刪除「'+c.category+'」整個分類嗎？')){ a.splice(ci,1); saveActivePack(); renderPackList(); updateLocalSummary(); } }
 function deleteSingleItem(ci,ii){ var a=getActivePackRef(); var c=a[ci]; if(!c||!c.items) return; c.items.splice(ii,1); saveActivePack(); renderPackList(); updateLocalSummary(); }
@@ -1318,7 +1339,7 @@ var activeCarryMenu=null;
 function closeCarryMenu(){ if(activeCarryMenu) activeCarryMenu.remove(); activeCarryMenu=null; }
 document.addEventListener('click',function(e){ if(activeCarryMenu&&activeCarryMenu.contains(e.target)) return; if(e.target&&e.target.closest&&e.target.closest('.carry-more-btn')) return; closeCarryMenu(); });
 function toggleCarryFlag(ci,ii){ if(packView!=='trip') return; var c=packTrip[ci]; if(!c||!c.items||!c.items[ii]) return; c.items[ii].carry=!c.items[ii].carry; saveJSON(PACK_TRIP_KEY,packTrip); closeCarryMenu(); renderPackList(); }
-function openCarryMenu(ci,ii,btn){ closeCarryMenu(); if(packView!=='trip') return; var c=packTrip[ci]; if(!c||!c.items||!c.items[ii]) return; var isOn=!!c.items[ii].carry; var menu=document.createElement('div'); menu.className='carry-menu'; menu.innerHTML='<div class="carry-menu-item" onclick="toggleCarryFlag('+ci+','+ii+')">'+(isOn?'從隨身包移除':'加入隨身包')+'</div>'; document.body.appendChild(menu); activeCarryMenu=menu; var rect=btn.getBoundingClientRect(); menu.style.top=(rect.bottom+window.scrollY+6)+'px'; menu.style.left=Math.max(8,rect.right+window.scrollX-menu.offsetWidth)+'px'; }
+function openCarryMenu(ci,ii,btn){ closeCarryMenu(); if(packView!=='trip') return; var c=packTrip[ci]; if(!c||!c.items||!c.items[ii]) return; var isOn=!!c.items[ii].carry; var menu=document.createElement('div'); menu.className='carry-menu'; menu.innerHTML='<div class="carry-menu-item" onclick="toggleCarryFlag('+ci+','+ii+')">'+(isOn?'從隨身包移除':'加入隨身包')+'</div><div class="carry-menu-item" onclick="editItemText('+ci+','+ii+');closeCarryMenu();">編輯文字</div>'; document.body.appendChild(menu); activeCarryMenu=menu; var rect=btn.getBoundingClientRect(); menu.style.top=(rect.bottom+window.scrollY+6)+'px'; menu.style.left=Math.max(8,rect.right+window.scrollX-menu.offsetWidth)+'px'; }
 function renderPackList(){
   var container=document.getElementById('pack-list-container'); if(!container) return;
   syncPackControlsUI();
@@ -1329,7 +1350,7 @@ function renderPackList(){
   container.innerHTML='';
   visible.forEach(function(catObj){
     var ci=active.indexOf(catObj); var isTemplate=(packView==='template');
-    var html='<div class="card-custom mb-3"><div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2"><span class="fw-bold text-primary"># '+catObj.category+'</span><div><button class="btn btn-sm btn-outline-dark py-0" data-act="add-item" type="button" onclick="addItemToCat('+ci+')"><i class="fas fa-plus"></i></button><button class="btn btn-sm btn-icon-mini ms-0" onclick="deleteCategory('+ci+')"><i class="fas fa-trash-alt"></i></button></div></div>';
+    var html='<div class="card-custom mb-3"><div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2"><span class="fw-bold text-primary"># '+catObj.category+'</span><div><button class="btn btn-sm btn-icon-mini" type="button" onclick="renameCategoryPrompt('+ci+')" title="重新命名"><i class="fas fa-pen" style="font-size:.72rem"></i></button><button class="btn btn-sm btn-outline-dark py-0" data-act="add-item" type="button" onclick="addItemToCat('+ci+')"><i class="fas fa-plus"></i></button><button class="btn btn-sm btn-icon-mini ms-0" onclick="deleteCategory('+ci+')"><i class="fas fa-trash-alt"></i></button></div></div>';
     var items=catObj.items||[]; var itemsToShow=(eCM&&!isTemplate)?items.filter(function(it){ return !!it.carry; }):items;
     if(!itemsToShow.length){ html+='<div class="text-center py-2 small text-muted">暫無項目</div>'; }
     else{ itemsToShow.forEach(function(item){
@@ -1338,7 +1359,7 @@ function renderPackList(){
       var chk=isTemplate?'':(isCL?'<input type="checkbox" '+(cc?'checked':'')+' onclick="event.stopPropagation();" onchange="toggleCarryChecked(\''+catObj.category.replace(/'/g,"\\'")+'\',' +'\''+item.text.replace(/'/g,"\\'")+'\')">':'<input type="checkbox" '+(item.checked?'checked':''));
       if(!isTemplate&&!isCL) chk+='>'; else if(isCL) chk+='>';
       var rowClick=(isTemplate||isCL)?'':'onclick="toggleItem('+ci+','+ii+')"';
-      var rbtns=isTemplate?'<button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>':(isCL?'':'<button class="btn btn-sm text-muted carry-more-btn" onclick="event.stopPropagation();openCarryMenu('+ci+','+ii+',this)">⋯</button><button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>');
+      var rbtns=isTemplate?'<button class="btn btn-sm text-muted" onclick="event.stopPropagation();editItemText('+ci+','+ii+')" title="編輯"><i class="fas fa-pen" style="font-size:.68rem"></i></button><button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>':(isCL?'':'<button class="btn btn-sm text-muted carry-more-btn" onclick="event.stopPropagation();openCarryMenu('+ci+','+ii+',this)">⋯</button><button class="btn btn-sm text-muted" onclick="deleteSingleItem('+ci+','+ii+')">\xd7</button>');
       html+='<div class="pack-item d-flex align-items-center justify-content-between py-1"><div class="d-flex align-items-center flex-grow-1" '+rowClick+'>'+chk+'<span class="pack-text '+((!isTemplate&&!isCL&&item.checked)?'checked':'')+' '+(isTemplate?'':'ms-2')+'">'+item.text+'</span>'+cb+'</div><div class="d-flex align-items-center gap-1">'+rbtns+'</div></div>';
     }); }
     html+='</div>'; container.innerHTML+=html;
@@ -1479,6 +1500,48 @@ function undoSync(){
   localStorage.removeItem('trip_sync_backup');
 }
 function pasteSyncCode(wEl){ navigator.clipboard.readText().then(function(t){ var inp=document.getElementById('sync-code-input'); if(inp) inp.value=t; wEl.classList.add('is-success'); setTimeout(function(){ wEl.classList.remove('is-success'); },900); }).catch(function(){ alert('無法讀取剪貼簿，請手動貼上'); }); }
+function handleSyncFileImport(ev){
+  var f=ev.target.files&&ev.target.files[0]; if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(e){ var inp=document.getElementById('sync-code-input'); if(inp) inp.value=(e.target.result||'').trim(); };
+  reader.onerror=function(){ alert('讀取檔案失敗，請確認檔案格式'); };
+  reader.readAsText(f,'utf-8');
+  ev.target.value='';
+}
+
+// ===== 常用連結 =====
+var QUICKLINKS_KEY='trip_custom_links';
+function loadQuickLinks(){
+  var raw=localStorage.getItem(QUICKLINKS_KEY);
+  if(!raw){
+    var def=[{label:'SBB 瑞士國鐵官網',url:'https://www.sbb.ch/en'},{label:'MeteoSwiss 瑞士天氣',url:'https://www.meteoswiss.admin.ch/'}];
+    localStorage.setItem(QUICKLINKS_KEY,JSON.stringify(def));
+    return def;
+  }
+  try{ return JSON.parse(raw); }catch(e){ return []; }
+}
+function saveQuickLinks(links){ localStorage.setItem(QUICKLINKS_KEY,JSON.stringify(links)); }
+function renderQuickLinks(){
+  var c=document.getElementById('quicklinks-container'); if(!c) return;
+  var links=loadQuickLinks();
+  if(!links.length){ c.innerHTML='<div class="small text-muted">尚無連結，點下方新增</div>'; return; }
+  c.innerHTML=links.map(function(l,i){
+    return '<div class="d-flex align-items-center gap-2">'
+      +'<a href="'+escapeHtml(l.url)+'" target="_blank" class="btn btn-sm btn-secondary-soft text-start flex-fill">'+escapeHtml(l.label)+'</a>'
+      +'<button type="button" class="btn btn-sm btn-icon-mini" onclick="deleteQuickLink('+i+')" title="刪除"><i class="fas fa-trash-alt" style="font-size:.72rem"></i></button>'
+      +'</div>';
+  }).join('');
+}
+function addQuickLinkPrompt(){
+  var label=prompt('連結名稱：'); if(!label||!label.trim()) return;
+  var url=prompt('網址（需包含 https://）：'); if(!url||!url.trim()) return;
+  var links=loadQuickLinks(); links.push({label:label.trim(),url:url.trim()}); saveQuickLinks(links); renderQuickLinks();
+}
+function deleteQuickLink(i){
+  if(!confirm('確定要刪除此連結嗎？')) return;
+  var links=loadQuickLinks(); links.splice(i,1); saveQuickLinks(links); renderQuickLinks();
+}
+renderQuickLinks();
 
 // ===== 收藏 =====
 var favorites=JSON.parse(localStorage.getItem('trip_favorites')||'[]');
