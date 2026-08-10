@@ -838,6 +838,7 @@ input,textarea{ font-size:.95rem; }
             <span class="btn-label-default">產生同步碼</span><span class="btn-label-success">✓ 已複製</span>
           </button>
         </div>
+        <button type="button" class="btn btn-sm btn-secondary-soft w-100 mt-2" onclick="exportSyncCodeAsFile()"><i class="fas fa-file-export"></i> 匯出 TXT 檔案</button>
       </div>
     </div>
     <div id="sync-pane-receive">
@@ -1328,6 +1329,12 @@ function renameCategoryPrompt(ci){
   if(active.some(function(x){ return x!==c && x.category===newName; })){ alert('此類別已存在'); return; }
   c.category=newName; saveActivePack(); renderPackList(); updateLocalSummary();
 }
+function toggleAllInCategory(ci){
+  var active=getActivePackRef(); var c=active[ci]; if(!c||!c.items||!c.items.length) return;
+  var allChecked=c.items.every(function(it){ return !!it.checked; });
+  c.items.forEach(function(it){ it.checked=!allChecked; });
+  saveActivePack(); renderPackList(); updateLocalSummary();
+}
 function editItemText(ci,ii){
   var active=getActivePackRef(); var c=active[ci]; if(!c||!c.items||!c.items[ii]) return;
   var it=c.items[ii];
@@ -1353,7 +1360,8 @@ function renderPackList(){
   container.innerHTML='';
   visible.forEach(function(catObj){
     var ci=active.indexOf(catObj); var isTemplate=(packView==='template');
-    var html='<div class="card-custom mb-3"><div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2"><span class="fw-bold text-primary"># '+catObj.category+'</span><div><button class="btn btn-sm btn-icon-mini" type="button" onclick="renameCategoryPrompt('+ci+')" title="重新命名"><i class="fas fa-pen" style="font-size:.72rem"></i></button><button class="btn btn-sm btn-outline-dark py-0" data-act="add-item" type="button" onclick="addItemToCat('+ci+')"><i class="fas fa-plus"></i></button><button class="btn btn-sm btn-icon-mini ms-0" onclick="deleteCategory('+ci+')"><i class="fas fa-trash-alt"></i></button></div></div>';
+    var bulkBtn=(!isTemplate&&!eCM)?'<button class="btn btn-sm btn-icon-mini" type="button" onclick="toggleAllInCategory('+ci+')" title="全部勾選/取消"><i class="fas fa-check-double" style="font-size:.72rem"></i></button>':'';
+    var html='<div class="card-custom mb-3"><div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2"><span class="fw-bold text-primary"># '+catObj.category+'</span><div>'+bulkBtn+'<button class="btn btn-sm btn-icon-mini" type="button" onclick="renameCategoryPrompt('+ci+')" title="重新命名"><i class="fas fa-pen" style="font-size:.72rem"></i></button><button class="btn btn-sm btn-outline-dark py-0" data-act="add-item" type="button" onclick="addItemToCat('+ci+')"><i class="fas fa-plus"></i></button><button class="btn btn-sm btn-icon-mini ms-0" onclick="deleteCategory('+ci+')"><i class="fas fa-trash-alt"></i></button></div></div>';
     var items=catObj.items||[]; var itemsToShow=(eCM&&!isTemplate)?items.filter(function(it){ return !!it.carry; }):items;
     if(!itemsToShow.length){ html+='<div class="text-center py-2 small text-muted">暫無項目</div>'; }
     else{ itemsToShow.forEach(function(item){
@@ -1503,6 +1511,17 @@ function undoSync(){
   localStorage.removeItem('trip_sync_backup');
 }
 function pasteSyncCode(wEl){ navigator.clipboard.readText().then(function(t){ var inp=document.getElementById('sync-code-input'); if(inp) inp.value=t; wEl.classList.add('is-success'); setTimeout(function(){ wEl.classList.remove('is-success'); },900); }).catch(function(){ alert('無法讀取剪貼簿，請手動貼上'); }); }
+function exportSyncCodeAsFile(){
+  var code=window._lastSyncCode;
+  if(!code){ alert('請先按「產生同步碼」再匯出'); return; }
+  var blob=new Blob([code],{type:'text/plain;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var ts=new Date().toISOString().slice(0,10);
+  a.href=url; a.download='行程同步碼_'+ts+'.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function handleSyncFileImport(ev){
   var f=ev.target.files&&ev.target.files[0]; if(!f) return;
   var reader=new FileReader();
@@ -1587,6 +1606,7 @@ function jumpToFavoriteItem(favId,itemId){
   if(wasClosed) setTimeout(doFlash,380); else doFlash();
 }
 function renderFavorites(){
+  updateLocalSummary();
   var container=document.getElementById('fav-list-container');
   var openIds=Array.from(container.querySelectorAll('.card-custom.open')).map(function(c){ return c.dataset.id; });
   container.innerHTML='';
@@ -1820,6 +1840,7 @@ function renderSection(section,dayIndex,sectionIndex){
 }
 
 function renderTimeline(){
+  updateLocalSummary();
   var tripData=loadTripData(); if(!tripData) return;
   tripData.days.forEach(function(day,dayIndex){
     var dc=document.querySelector('#day-'+(910+dayIndex)+' .timeline-container'); if(!dc) return;
